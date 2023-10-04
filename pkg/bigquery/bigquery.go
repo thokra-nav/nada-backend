@@ -2,17 +2,24 @@ package bigquery
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"cloud.google.com/go/bigquery"
+	"github.com/google/uuid"
 	"github.com/navikt/nada-backend/pkg/graph/models"
+	"google.golang.org/api/googleapi"
 	"google.golang.org/api/iterator"
 )
 
-type Bigquery struct{}
+type Bigquery struct {
+	centralDataProject string
+}
 
-func New(ctx context.Context) (*Bigquery, error) {
-	return &Bigquery{}, nil
+func New(ctx context.Context, centralDataProject string) (*Bigquery, error) {
+	return &Bigquery{
+		centralDataProject: centralDataProject,
+	}, nil
 }
 
 func (c *Bigquery) TableMetadata(ctx context.Context, projectID string, datasetID string, tableID string) (models.BigqueryMetadata, error) {
@@ -112,6 +119,133 @@ func (c *Bigquery) GetTables(ctx context.Context, projectID, datasetID string) (
 	}
 
 	return tables, nil
+}
+
+func (c *Bigquery) CreatePseudoynimizedView(ctx context.Context, projectID, datasetID, tableID string, piiColumns []string) error {
+	client, err := bigquery.NewClient(ctx, c.centralDataProject)
+	if err != nil {
+		return fmt.Errorf("bigquery.NewClient: %v", err)
+	}
+	defer client.Close()
+
+	projectIDToUnderscore := strings.ReplaceAll(projectID, "-", "_")
+	secretDatasetID := projectIDToUnderscore + "_vault"
+	secretTableID := "secrets"
+	encryptedDatasetId := "encrypted_views"
+	encryptedTableId := fmt.Sprintf("%v_%v_%v", projectIDToUnderscore, datasetID, tableID)
+	if err := c.createSecretDataset(ctx, secretDatasetID); err != nil {
+		return err
+	}
+	if err := c.createSecretTable(ctx, secretDatasetID, secretTableID); err != nil {
+		return err
+	}
+	if err := c.insertEncryptionKeyIfNotExists(ctx, secretDatasetID, secretTableID, tableID); err != nil {
+		return err
+	}
+
+	var viewQuery strings.Builder
+	fmt.Fprintf(&viewQuery, "WITH twts AS (SELECT ts.encryption_key AS encryption_key, * FROM `%v.%v.%v` t ", projectID, datasetID, tableID)
+	fmt.Fprintf(&viewQuery, "LEFT JOIN `%v.%v.%v` ts ", c.centralDataProject, secretDatasetID, secretTableID)
+	fmt.Fprintf(&viewQuery, "ON ts.table_id='%v.%v') SELECT ", encryptedDatasetId, encryptedTableId)
+
+	exceptValues := " EXCEPT("
+	for i, c := range piiColumns {
+		if i != len(piiColumns)-1 {
+			fmt.Fprintf(&viewQuery, "SHA256(%v) ^ SHA256('twts.encryption_key') AS x%v, ", c, c)
+			exceptValues += fmt.Sprintf("%v,", c)
+		} else {
+			fmt.Fprintf(&viewQuery, "SHA256(%v) ^ SHA256('twts.encryption_key') AS x%v, * ", c, c)
+			exceptValues += fmt.Sprintf("%v,encryption_key,table_id)", c)
+		}
+	}
+	fmt.Fprintf(&viewQuery, "%v FROM twts", exceptValues)
+
+	meta := &bigquery.TableMetadata{
+		ViewQuery: viewQuery.String(),
+	}
+	if err := client.Dataset(encryptedDatasetId).Table(encryptedTableId).Create(ctx, meta); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Bigquery) createSecretDataset(ctx context.Context, datasetID string) error {
+	client, err := bigquery.NewClient(ctx, c.centralDataProject)
+	if err != nil {
+		return fmt.Errorf("bigquery.NewClient: %v", err)
+	}
+	defer client.Close()
+
+	meta := &bigquery.DatasetMetadata{
+		Location: "europe-north1",
+	}
+	if err := client.Dataset(datasetID).Create(ctx, meta); err != nil {
+		if err != nil {
+			if gerr, ok := err.(*googleapi.Error); ok && gerr.Code == 409 {
+				return nil
+			}
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *Bigquery) createSecretTable(ctx context.Context, datasetID, tableID string) error {
+	client, err := bigquery.NewClient(ctx, c.centralDataProject)
+	if err != nil {
+		return fmt.Errorf("bigquery.NewClient: %v", err)
+	}
+	defer client.Close()
+
+	sampleSchema := bigquery.Schema{
+		{Name: "table_id", Type: bigquery.StringFieldType},
+		{Name: "encryption_key", Type: bigquery.StringFieldType},
+	}
+
+	metaData := &bigquery.TableMetadata{
+		Schema: sampleSchema,
+	}
+	tableRef := client.Dataset(datasetID).Table(tableID)
+	if err := tableRef.Create(ctx, metaData); err != nil {
+		if gerr, ok := err.(*googleapi.Error); ok && gerr.Code == 409 {
+			return nil
+		}
+		return err
+	}
+	return nil
+}
+
+func (c *Bigquery) insertEncryptionKeyIfNotExists(ctx context.Context, secretDatasetID, secretTableID, tableID string) error {
+	client, err := bigquery.NewClient(ctx, c.centralDataProject)
+	if err != nil {
+		return fmt.Errorf("bigquery.NewClient: %v", err)
+	}
+	defer client.Close()
+
+	encryptionKey, err := uuid.NewUUID()
+	if err != nil {
+		return err
+	}
+
+	var insertQuery strings.Builder
+	fmt.Fprintf(&insertQuery, "INSERT INTO `%v.%v.%v` (table_id, encryption_key) ", c.centralDataProject, secretDatasetID, secretTableID)
+	fmt.Fprintf(&insertQuery, "SELECT '%v', '%v' FROM UNNEST([1]) ", tableID, encryptionKey.String())
+	fmt.Fprintf(&insertQuery, "WHERE NOT EXISTS (SELECT 1 FROM `%v.%v.%v` WHERE table_id = '%v')", c.centralDataProject, secretDatasetID, secretTableID, tableID)
+
+	job, err := client.Query(insertQuery.String()).Run(ctx)
+	if err != nil {
+		return err
+	}
+
+	status, err := job.Wait(ctx)
+	if err != nil {
+		return err
+	}
+	if status.Err() != nil {
+		return err
+	}
+
+	return nil
 }
 
 func isSupportedTableType(tableType bigquery.TableType) bool {

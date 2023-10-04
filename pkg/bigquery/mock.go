@@ -47,6 +47,10 @@ func (m *Mock) GetDatasets(ctx context.Context, projectID string) ([]string, err
 	return []string{"dataset1", "dataset2"}, nil
 }
 
+func (m *Mock) CreatePseudoynimizedView(ctx context.Context, projectID, datasetID, tableID string, piiColumns []string) error {
+	return nil
+}
+
 func (m *Mock) TableMetadata(ctx context.Context, projectID string, datasetID string, tableID string) (models.BigqueryMetadata, error) {
 	var table *models.BigQueryTable
 	for _, t := range m.Tables {
@@ -63,7 +67,7 @@ func (m *Mock) TableMetadata(ctx context.Context, projectID string, datasetID st
 	return models.BigqueryMetadata{
 		TableType:   bigquery.TableType(strings.ToUpper(string(table.Type))),
 		Created:     time.Now(),
-		Expires:     time.Date(2033, time.April, 14, 18, 00, 00, 00, time.UTC),
+		Expires:     time.Date(2033, time.April, 14, 18, 0o0, 0o0, 0o0, time.UTC),
 		Description: "This is a table description explaining the contents of the table",
 		Schema: models.BigquerySchema{
 			Columns: []models.BigqueryColumn{

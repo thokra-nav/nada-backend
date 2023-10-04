@@ -51,6 +51,7 @@ local-with-auth:
 	--team-projects-url=https://raw.githubusercontent.com/nais/teams/master/gcp-projects/dev-output.json \
 	--quarto-bucket=nada-quarto-storage-dev \
 	--console-api-key="$(CONSOLE_API_KEY)" \
+	--central-data-project=nav-central-data-dev-e170 \
 	--log-level=debug
 
 local:
@@ -61,6 +62,7 @@ local:
 	--skip-metadata-sync \
 	--quarto-bucket=nada-quarto-storage-dev \
 	--log-level=debug \
+	--central-data-project=nav-central-data-dev-e170 \
 	--slack-token=$(SLACK_TOKEN)
 
 migrate:

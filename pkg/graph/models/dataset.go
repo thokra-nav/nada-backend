@@ -64,6 +64,7 @@ type NewDataset struct {
 	AnonymisationDescription *string     `json:"anonymisationDescription"`
 	GrantAllUsers            *bool       `json:"grantAllUsers"`
 	TargetUser               *string     `json:"targetUser"`
+	CreatePseudoynimizedView bool        `json:"createPseudoynimizedView"`
 	Metadata                 BigqueryMetadata
 }
 
@@ -78,6 +79,7 @@ type NewDatasetForNewDataproduct struct {
 	AnonymisationDescription *string     `json:"anonymisationDescription"`
 	GrantAllUsers            *bool       `json:"grantAllUsers"`
 	TargetUser               *string     `json:"targetUser"`
+	CreatePseudoynimizedView bool        `json:"createPseudoynimizedView"`
 	Metadata                 BigqueryMetadata
 }
 
@@ -92,6 +94,7 @@ type UpdateDataset struct {
 	AnonymisationDescription *string    `json:"anonymisationDescription"`
 	PiiTags                  *string    `json:"piiTags"`
 	TargetUser               *string    `json:"targetUser"`
+	CreatePseudoynimizedView bool       `json:"createPseudoynimizedView"`
 }
 
 type DatasetServices struct {

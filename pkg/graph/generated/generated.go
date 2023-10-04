@@ -50,9 +50,6 @@ type ResolverRoot interface {
 	Story() StoryResolver
 	Team() TeamResolver
 	UserInfo() UserInfoResolver
-	NewDataset() NewDatasetResolver
-	NewDatasetForNewDataproduct() NewDatasetForNewDataproductResolver
-	UpdateDataset() UpdateDatasetResolver
 }
 
 type DirectiveRoot struct {
@@ -500,16 +497,6 @@ type UserInfoResolver interface {
 	QuartoStories(ctx context.Context, obj *models.UserInfo) ([]*models.QuartoStory, error)
 	InsightProducts(ctx context.Context, obj *models.UserInfo) ([]*models.InsightProduct, error)
 	AccessRequests(ctx context.Context, obj *models.UserInfo) ([]*models.AccessRequest, error)
-}
-
-type NewDatasetResolver interface {
-	CreatePseudoynimizedView(ctx context.Context, obj *models.NewDataset, data *bool) error
-}
-type NewDatasetForNewDataproductResolver interface {
-	CreatePseudoynimizedView(ctx context.Context, obj *models.NewDatasetForNewDataproduct, data *bool) error
-}
-type UpdateDatasetResolver interface {
-	CreatePseudoynimizedView(ctx context.Context, obj *models.UpdateDataset, data *bool) error
 }
 
 type executableSchema struct {
@@ -19742,13 +19729,11 @@ func (ec *executionContext) unmarshalInputNewDataset(ctx context.Context, obj in
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createPseudoynimizedView"))
-			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			if err = ec.resolvers.NewDataset().CreatePseudoynimizedView(ctx, &it, data); err != nil {
-				return it, err
-			}
+			it.CreatePseudoynimizedView = data
 		}
 	}
 
@@ -19854,13 +19839,11 @@ func (ec *executionContext) unmarshalInputNewDatasetForNewDataproduct(ctx contex
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createPseudoynimizedView"))
-			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			if err = ec.resolvers.NewDatasetForNewDataproduct().CreatePseudoynimizedView(ctx, &it, data); err != nil {
-				return it, err
-			}
+			it.CreatePseudoynimizedView = data
 		}
 	}
 
@@ -20650,13 +20633,11 @@ func (ec *executionContext) unmarshalInputUpdateDataset(ctx context.Context, obj
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createPseudoynimizedView"))
-			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			if err = ec.resolvers.UpdateDataset().CreatePseudoynimizedView(ctx, &it, data); err != nil {
-				return it, err
-			}
+			it.CreatePseudoynimizedView = data
 		}
 	}
 
