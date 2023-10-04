@@ -155,6 +155,8 @@ input NewDataset @goModel(model: "github.com/navikt/nada-backend/pkg/graph/model
     grantAllUsers: Boolean
     "targetUser is the type of user that the dataset is meant to be used by"
     targetUser: String
+    "createPseudoynimizedView is the flag about whether markedplassen should create and share a pseudoynimized view for the dataset"
+    createPseudoynimizedView: Boolean
 }
 
 """
@@ -179,6 +181,8 @@ input NewDatasetForNewDataproduct @goModel(model: "github.com/navikt/nada-backen
     grantAllUsers: Boolean
     "targetUser is the type of user that the dataset is meant to be used by"
     targetUser: String
+    "createPseudoynimizedView is the flag about whether markedplassen should create and share a pseudoynimized view for the dataset"
+    createPseudoynimizedView: Boolean
 }
 
 """
@@ -203,6 +207,8 @@ input UpdateDataset @goModel(model: "github.com/navikt/nada-backend/pkg/graph/mo
     piiTags: String
     "targetUser is the type of user that the dataset is meant to be used by"
     targetUser: String
+    "createPseudoynimizedView is the flag about whether markedplassen should create and share a pseudoynimized view for the dataset"
+    createPseudoynimizedView: Boolean
 }
 
 """

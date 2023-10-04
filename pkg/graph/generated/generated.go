@@ -50,6 +50,9 @@ type ResolverRoot interface {
 	Story() StoryResolver
 	Team() TeamResolver
 	UserInfo() UserInfoResolver
+	NewDataset() NewDatasetResolver
+	NewDatasetForNewDataproduct() NewDatasetForNewDataproductResolver
+	UpdateDataset() UpdateDatasetResolver
 }
 
 type DirectiveRoot struct {
@@ -497,6 +500,16 @@ type UserInfoResolver interface {
 	QuartoStories(ctx context.Context, obj *models.UserInfo) ([]*models.QuartoStory, error)
 	InsightProducts(ctx context.Context, obj *models.UserInfo) ([]*models.InsightProduct, error)
 	AccessRequests(ctx context.Context, obj *models.UserInfo) ([]*models.AccessRequest, error)
+}
+
+type NewDatasetResolver interface {
+	CreatePseudoynimizedView(ctx context.Context, obj *models.NewDataset, data *bool) error
+}
+type NewDatasetForNewDataproductResolver interface {
+	CreatePseudoynimizedView(ctx context.Context, obj *models.NewDatasetForNewDataproduct, data *bool) error
+}
+type UpdateDatasetResolver interface {
+	CreatePseudoynimizedView(ctx context.Context, obj *models.UpdateDataset, data *bool) error
 }
 
 type executableSchema struct {
@@ -2964,6 +2977,8 @@ input NewDataset @goModel(model: "github.com/navikt/nada-backend/pkg/graph/model
     grantAllUsers: Boolean
     "targetUser is the type of user that the dataset is meant to be used by"
     targetUser: String
+    "createPseudoynimizedView is the flag about whether markedplassen should create and share a pseudoynimized view for the dataset"
+    createPseudoynimizedView: Boolean
 }
 
 """
@@ -2988,6 +3003,8 @@ input NewDatasetForNewDataproduct @goModel(model: "github.com/navikt/nada-backen
     grantAllUsers: Boolean
     "targetUser is the type of user that the dataset is meant to be used by"
     targetUser: String
+    "createPseudoynimizedView is the flag about whether markedplassen should create and share a pseudoynimized view for the dataset"
+    createPseudoynimizedView: Boolean
 }
 
 """
@@ -3012,6 +3029,8 @@ input UpdateDataset @goModel(model: "github.com/navikt/nada-backend/pkg/graph/mo
     piiTags: String
     "targetUser is the type of user that the dataset is meant to be used by"
     targetUser: String
+    "createPseudoynimizedView is the flag about whether markedplassen should create and share a pseudoynimized view for the dataset"
+    createPseudoynimizedView: Boolean
 }
 
 """
@@ -19622,7 +19641,7 @@ func (ec *executionContext) unmarshalInputNewDataset(ctx context.Context, obj in
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"dataproductID", "name", "description", "repo", "pii", "keywords", "bigquery", "anonymisation_description", "grantAllUsers", "targetUser"}
+	fieldsInOrder := [...]string{"dataproductID", "name", "description", "repo", "pii", "keywords", "bigquery", "anonymisation_description", "grantAllUsers", "targetUser", "createPseudoynimizedView"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -19719,6 +19738,17 @@ func (ec *executionContext) unmarshalInputNewDataset(ctx context.Context, obj in
 				return it, err
 			}
 			it.TargetUser = data
+		case "createPseudoynimizedView":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createPseudoynimizedView"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.NewDataset().CreatePseudoynimizedView(ctx, &it, data); err != nil {
+				return it, err
+			}
 		}
 	}
 
@@ -19732,7 +19762,7 @@ func (ec *executionContext) unmarshalInputNewDatasetForNewDataproduct(ctx contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "description", "repo", "pii", "keywords", "bigquery", "anonymisation_description", "grantAllUsers", "targetUser"}
+	fieldsInOrder := [...]string{"name", "description", "repo", "pii", "keywords", "bigquery", "anonymisation_description", "grantAllUsers", "targetUser", "createPseudoynimizedView"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -19820,6 +19850,17 @@ func (ec *executionContext) unmarshalInputNewDatasetForNewDataproduct(ctx contex
 				return it, err
 			}
 			it.TargetUser = data
+		case "createPseudoynimizedView":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createPseudoynimizedView"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.NewDatasetForNewDataproduct().CreatePseudoynimizedView(ctx, &it, data); err != nil {
+				return it, err
+			}
 		}
 	}
 
@@ -20517,7 +20558,7 @@ func (ec *executionContext) unmarshalInputUpdateDataset(ctx context.Context, obj
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "description", "repo", "pii", "keywords", "dataproductID", "anonymisation_description", "piiTags", "targetUser"}
+	fieldsInOrder := [...]string{"name", "description", "repo", "pii", "keywords", "dataproductID", "anonymisation_description", "piiTags", "targetUser", "createPseudoynimizedView"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -20605,6 +20646,17 @@ func (ec *executionContext) unmarshalInputUpdateDataset(ctx context.Context, obj
 				return it, err
 			}
 			it.TargetUser = data
+		case "createPseudoynimizedView":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createPseudoynimizedView"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.UpdateDataset().CreatePseudoynimizedView(ctx, &it, data); err != nil {
+				return it, err
+			}
 		}
 	}
 
