@@ -23,3 +23,7 @@ func (a Noop) HasAccess(ctx context.Context, projectID, datasetID, tableID, memb
 func (a Noop) AddToAuthorizedViews(ctx context.Context, projectID, dataset, table string) error {
 	return nil
 }
+
+func (a Noop) MakeAuthorizedViewForDataset(ctx context.Context, projectID, dataset, viewProjectID, viewDataset, viewID string) error {
+	return nil
+}

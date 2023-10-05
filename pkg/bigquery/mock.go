@@ -47,8 +47,8 @@ func (m *Mock) GetDatasets(ctx context.Context, projectID string) ([]string, err
 	return []string{"dataset1", "dataset2"}, nil
 }
 
-func (m *Mock) CreatePseudoynimizedView(ctx context.Context, projectID, datasetID, tableID string, piiColumns []string) error {
-	return nil
+func (m *Mock) CreatePseudoynimizedView(ctx context.Context, projectID, datasetID, tableID string, piiColumns []string) (string, string, string, error) {
+	return "", "", "", nil
 }
 
 func (m *Mock) TableMetadata(ctx context.Context, projectID string, datasetID string, tableID string) (models.BigqueryMetadata, error) {

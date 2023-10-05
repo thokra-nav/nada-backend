@@ -21,13 +21,14 @@ type Bigquery interface {
 	GetTables(ctx context.Context, projectID, datasetID string) ([]*models.BigQueryTable, error)
 	GetDatasets(ctx context.Context, projectID string) ([]string, error)
 	TableMetadata(ctx context.Context, projectID string, datasetID string, tableID string) (models.BigqueryMetadata, error)
-	CreatePseudoynimizedView(ctx context.Context, projectID, datasetID, tableID string, piiColumns []string) error
+	CreatePseudoynimizedView(ctx context.Context, projectID, datasetID, tableID string, piiColumns []string) (string, string, string, error)
 }
 
 type AccessManager interface {
 	Grant(ctx context.Context, projectID, dataset, table, member string) error
 	Revoke(ctx context.Context, projectID, dataset, table, member string) error
 	AddToAuthorizedViews(ctx context.Context, projectID, dataset, table string) error
+	MakeAuthorizedViewForDataset(ctx context.Context, projectID, dataset, viewProjectID, viewDataset, viewID string) error
 }
 
 type Polly interface {

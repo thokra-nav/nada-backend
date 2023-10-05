@@ -82,7 +82,7 @@ func (b Bigquery) Revoke(ctx context.Context, projectID, datasetID, tableID, mem
 	return bqTable.IAM().SetPolicy(ctx, policy)
 }
 
-func (b Bigquery) AddToAuthorizedViews(ctx context.Context, projectID, dataset, table string) error {
+func (b Bigquery) MakeAuthorizedViewForDataset(ctx context.Context, projectID, dataset, viewProjectID, viewDataset, viewID string) error {
 	bqClient, err := bigquery.NewClient(ctx, projectID)
 	if err != nil {
 		return fmt.Errorf("bigquery.NewClient: %v", err)
@@ -97,7 +97,7 @@ func (b Bigquery) AddToAuthorizedViews(ctx context.Context, projectID, dataset, 
 	if m.Access != nil {
 		for _, e := range m.Access {
 			if e != nil && e.EntityType == bigquery.ViewEntity && e.View != nil &&
-				e.View.ProjectID == projectID && e.View.DatasetID == dataset && e.View.TableID == table {
+				e.View.ProjectID == viewProjectID && e.View.DatasetID == viewDataset && e.View.TableID == viewID {
 				return nil
 			}
 		}
@@ -106,9 +106,9 @@ func (b Bigquery) AddToAuthorizedViews(ctx context.Context, projectID, dataset, 
 	newEntry := &bigquery.AccessEntry{
 		EntityType: bigquery.ViewEntity,
 		View: &bigquery.Table{
-			ProjectID: projectID,
-			DatasetID: dataset,
-			TableID:   table,
+			ProjectID: viewProjectID,
+			DatasetID: viewDataset,
+			TableID:   viewID,
 		},
 	}
 
@@ -120,6 +120,10 @@ func (b Bigquery) AddToAuthorizedViews(ctx context.Context, projectID, dataset, 
 	}
 
 	return nil
+}
+
+func (b Bigquery) AddToAuthorizedViews(ctx context.Context, projectID, dataset, table string) error {
+	return b.MakeAuthorizedViewForDataset(ctx, projectID, dataset, projectID, dataset, table)
 }
 
 func getPolicy(ctx context.Context, bqclient *bigquery.Client, datasetID, tableID string) (*iam.Policy, error) {

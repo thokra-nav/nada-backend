@@ -121,28 +121,7 @@ func (c *Bigquery) GetTables(ctx context.Context, projectID, datasetID string) (
 	return tables, nil
 }
 
-func (c *Bigquery) CreatePseudoynimizedView(ctx context.Context, projectID, datasetID, tableID string, piiColumns []string) error {
-	client, err := bigquery.NewClient(ctx, c.centralDataProject)
-	if err != nil {
-		return fmt.Errorf("bigquery.NewClient: %v", err)
-	}
-	defer client.Close()
-
-	projectIDToUnderscore := strings.ReplaceAll(projectID, "-", "_")
-	secretDatasetID := projectIDToUnderscore + "_vault"
-	secretTableID := "secrets"
-	encryptedDatasetId := "encrypted_views"
-	encryptedTableId := fmt.Sprintf("%v_%v_%v", projectIDToUnderscore, datasetID, tableID)
-	if err := c.createSecretDataset(ctx, secretDatasetID); err != nil {
-		return err
-	}
-	if err := c.createSecretTable(ctx, secretDatasetID, secretTableID); err != nil {
-		return err
-	}
-	if err := c.insertEncryptionKeyIfNotExists(ctx, secretDatasetID, secretTableID, tableID); err != nil {
-		return err
-	}
-
+func (c *Bigquery) ComposeViewQuery(secretDatasetID, secretTableID, encryptedDatasetId, encryptedTableId, projectID, datasetID, tableID string, piiColumns []string) string {
 	var viewQuery strings.Builder
 	fmt.Fprintf(&viewQuery, "WITH twts AS (SELECT ts.encryption_key AS encryption_key, * FROM `%v.%v.%v` t ", projectID, datasetID, tableID)
 	fmt.Fprintf(&viewQuery, "LEFT JOIN `%v.%v.%v` ts ", c.centralDataProject, secretDatasetID, secretTableID)
@@ -159,14 +138,39 @@ func (c *Bigquery) CreatePseudoynimizedView(ctx context.Context, projectID, data
 		}
 	}
 	fmt.Fprintf(&viewQuery, "%v FROM twts", exceptValues)
+	return viewQuery.String()
+}
+
+func (c *Bigquery) CreatePseudoynimizedView(ctx context.Context, projectID, datasetID, tableID string, piiColumns []string) (string, string, string, error) {
+	client, err := bigquery.NewClient(ctx, c.centralDataProject)
+	if err != nil {
+		return "", "", "", fmt.Errorf("bigquery.NewClient: %v", err)
+	}
+	defer client.Close()
+
+	projectIDToUnderscore := strings.ReplaceAll(projectID, "-", "_")
+	secretDatasetID := projectIDToUnderscore + "_vault"
+	secretTableID := "secrets"
+	encryptedDatasetId := "encrypted_views"
+	encryptedTableId := fmt.Sprintf("%v_%v_%v", projectIDToUnderscore, datasetID, tableID)
+	viewQuery := c.ComposeViewQuery(secretDatasetID, secretTableID, encryptedDatasetId, encryptedTableId, projectID, datasetID, tableID, piiColumns)
+	if err := c.createSecretDataset(ctx, secretDatasetID); err != nil {
+		return "", "", "", err
+	}
+	if err := c.createSecretTable(ctx, secretDatasetID, secretTableID); err != nil {
+		return "", "", "", err
+	}
+	if err := c.insertEncryptionKeyIfNotExists(ctx, secretDatasetID, secretTableID, tableID); err != nil {
+		return "", "", "", err
+	}
 
 	meta := &bigquery.TableMetadata{
-		ViewQuery: viewQuery.String(),
+		ViewQuery: viewQuery,
 	}
 	if err := client.Dataset(encryptedDatasetId).Table(encryptedTableId).Create(ctx, meta); err != nil {
-		return err
+		return "", "", "", err
 	}
-	return nil
+	return c.centralDataProject, encryptedDatasetId, encryptedTableId, nil
 }
 
 func (c *Bigquery) createSecretDataset(ctx context.Context, datasetID string) error {

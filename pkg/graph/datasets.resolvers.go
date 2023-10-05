@@ -136,18 +136,28 @@ func (r *mutationResolver) CreateDataset(ctx context.Context, input models.NewDa
 	}
 
 	input.Metadata = metadata
+
 	if input.Description != nil && *input.Description != "" {
 		*input.Description = html.EscapeString(*input.Description)
 	}
-	ds, err := r.repo.CreateDataset(ctx, input, user)
+
+	pseudonimizedView, err := r.CreatePseudoynimizedView(ctx, input)
 	if err != nil {
+		//TODO: should we still create the dataset?
+		r.log.WithError(err).Warn("failed to create pseudonynized view. the dataset with pii will still be created")
+	}
+
+	newDatasets := []*models.NewDataset{&input}
+	if pseudonimizedView != nil {
+		newDatasets = append(newDatasets, pseudonimizedView)
+	}
+
+	ds, err := r.repo.CreateDatasets(ctx, newDatasets, user)
+	if err != nil {
+		r.log.WithError(err).Errorf("failed to create dataset: %v", input.Name)
 		return nil, err
 	}
-
-	if input.CreatePseudoynimizedView {
-	}
-
-	return ds, nil
+	return ds[0], nil
 }
 
 // UpdateDataset is the resolver for the updateDataset field.
@@ -262,7 +272,5 @@ func (r *Resolver) BigQuery() generated.BigQueryResolver { return &bigQueryResol
 // Dataset returns generated.DatasetResolver implementation.
 func (r *Resolver) Dataset() generated.DatasetResolver { return &datasetResolver{r} }
 
-type (
-	bigQueryResolver struct{ *Resolver }
-	datasetResolver  struct{ *Resolver }
-)
+type bigQueryResolver struct{ *Resolver }
+type datasetResolver struct{ *Resolver }
