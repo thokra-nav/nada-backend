@@ -38,6 +38,81 @@ func (r *Repo) GetDatasetsInDataproduct(ctx context.Context, id uuid.UUID) ([]*m
 	return datasetsGraph, nil
 }
 
+func (r *Repo) createDataset(ctx context.Context, tx *sql.Tx, ds *models.NewDataset, user *auth.User)(*models.Dataset, error){
+	querier := r.querier.WithTx(tx)
+
+	created, err := querier.CreateDataset(ctx, gensql.CreateDatasetParams{
+		Name:                     ds.Name,
+		DataproductID:            ds.DataproductID,
+		Description:              ptrToNullString(ds.Description),
+		Pii:                      gensql.PiiLevel(ds.Pii.String()),
+		Type:                     "bigquery",
+		Slug:                     slugify(ds.Slug, ds.Name),
+		Repo:                     ptrToNullString(ds.Repo),
+		Keywords:                 ds.Keywords,
+		AnonymisationDescription: ptrToNullString(ds.AnonymisationDescription),
+		TargetUser:               ptrToNullString(ds.TargetUser),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	schemaJSON, err := json.Marshal(ds.Metadata.Schema.Columns)
+	if err != nil {
+		return nil, fmt.Errorf("marshalling schema: %w", err)
+	}
+
+	if ds.BigQuery.PiiTags != nil && !json.Valid([]byte(*ds.BigQuery.PiiTags)) {
+		return nil, fmt.Errorf("invalid pii tags, must be json map or null: %w", err)
+	}
+
+	_, err = querier.CreateBigqueryDatasource(ctx, gensql.CreateBigqueryDatasourceParams{
+		DatasetID:    created.ID,
+		ProjectID:    ds.BigQuery.ProjectID,
+		Dataset:      ds.BigQuery.Dataset,
+		TableName:    ds.BigQuery.Table,
+		Schema:       pqtype.NullRawMessage{RawMessage: schemaJSON, Valid: len(schemaJSON) > 4},
+		LastModified: ds.Metadata.LastModified,
+		Created:      ds.Metadata.Created,
+		Expires:      sql.NullTime{Time: ds.Metadata.Expires, Valid: !ds.Metadata.Expires.IsZero()},
+		TableType:    string(ds.Metadata.TableType),
+		PiiTags: pqtype.NullRawMessage{
+			RawMessage: json.RawMessage([]byte(ptrToString(ds.BigQuery.PiiTags))),
+			Valid:      len(ptrToString(ds.BigQuery.PiiTags)) > 4,
+		},
+	})
+	if err != nil {
+		if err := tx.Rollback(); err != nil {
+			r.log.WithError(err).Error("Rolling back dataset and datasource_bigquery transaction")
+		}
+		return nil, err
+	}
+
+	if ds.GrantAllUsers != nil && *ds.GrantAllUsers {
+		_, err = querier.GrantAccessToDataset(ctx, gensql.GrantAccessToDatasetParams{
+			DatasetID: created.ID,
+			Expires:   sql.NullTime{},
+			Subject:   emailOfSubjectToLower("group:all-users@nav.no"),
+			Granter:   user.Email,
+		})
+		if err != nil {
+			if err := tx.Rollback(); err != nil {
+				r.log.WithError(err).Error("Rolling back dataset and datasource_bigquery transaction")
+			}
+			return nil, err
+		}
+	}
+
+	for _, keyword := range ds.Keywords {
+		err = querier.CreateTagIfNotExist(ctx, keyword)
+		if err != nil {
+			r.log.WithError(err).Warn("failed to create tag when creating dataset in database")
+		}
+	}
+
+	return datasetFromSQL(created), nil
+}
+
 func (r *Repo) CreateDatasets(ctx context.Context, datasets []*models.NewDataset, user *auth.User) ([]*models.Dataset, error) {
 	tx, err := r.db.Begin()
 	if err != nil {
@@ -47,82 +122,18 @@ func (r *Repo) CreateDatasets(ctx context.Context, datasets []*models.NewDataset
 	var createdDatasets []*models.Dataset
 
 	for _, ds := range datasets {
-		if ds.Keywords == nil {
-			ds.Keywords = []string{}
-		}
-
-		querier := r.querier.WithTx(tx)
-		created, err := querier.CreateDataset(ctx, gensql.CreateDatasetParams{
-			Name:                     ds.Name,
-			DataproductID:            ds.DataproductID,
-			Description:              ptrToNullString(ds.Description),
-			Pii:                      gensql.PiiLevel(ds.Pii.String()),
-			Type:                     "bigquery",
-			Slug:                     slugify(ds.Slug, ds.Name),
-			Repo:                     ptrToNullString(ds.Repo),
-			Keywords:                 ds.Keywords,
-			AnonymisationDescription: ptrToNullString(ds.AnonymisationDescription),
-			TargetUser:               ptrToNullString(ds.TargetUser),
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		schemaJSON, err := json.Marshal(ds.Metadata.Schema.Columns)
-		if err != nil {
-			return nil, fmt.Errorf("marshalling schema: %w", err)
-		}
-
-		if ds.BigQuery.PiiTags != nil && !json.Valid([]byte(*ds.BigQuery.PiiTags)) {
-			return nil, fmt.Errorf("invalid pii tags, must be json map or null: %w", err)
-		}
-
-		_, err = querier.CreateBigqueryDatasource(ctx, gensql.CreateBigqueryDatasourceParams{
-			DatasetID:    created.ID,
-			ProjectID:    ds.BigQuery.ProjectID,
-			Dataset:      ds.BigQuery.Dataset,
-			TableName:    ds.BigQuery.Table,
-			Schema:       pqtype.NullRawMessage{RawMessage: schemaJSON, Valid: len(schemaJSON) > 4},
-			LastModified: ds.Metadata.LastModified,
-			Created:      ds.Metadata.Created,
-			Expires:      sql.NullTime{Time: ds.Metadata.Expires, Valid: !ds.Metadata.Expires.IsZero()},
-			TableType:    string(ds.Metadata.TableType),
-			PiiTags: pqtype.NullRawMessage{
-				RawMessage: json.RawMessage([]byte(ptrToString(ds.BigQuery.PiiTags))),
-				Valid:      len(ptrToString(ds.BigQuery.PiiTags)) > 4,
-			},
-		})
-		if err != nil {
+		created, err:= r.createDataset(ctx, tx, ds, user)
+		if err!= nil{
 			if err := tx.Rollback(); err != nil {
-				r.log.WithError(err).Error("Rolling back dataset and datasource_bigquery transaction")
-			}
-			return nil, err
-		}
-
-		if ds.GrantAllUsers != nil && *ds.GrantAllUsers {
-			_, err = querier.GrantAccessToDataset(ctx, gensql.GrantAccessToDatasetParams{
-				DatasetID: created.ID,
-				Expires:   sql.NullTime{},
-				Subject:   emailOfSubjectToLower("group:all-users@nav.no"),
-				Granter:   user.Email,
-			})
-			if err != nil {
-				if err := tx.Rollback(); err != nil {
-					r.log.WithError(err).Error("Rolling back dataset and datasource_bigquery transaction")
-				}
+				r.log.WithError(err).Error("Rolling back creation of dataset transaction")
 				return nil, err
 			}
+			return nil, err
 		}
-
-		for _, keyword := range ds.Keywords {
-			err = querier.CreateTagIfNotExist(ctx, keyword)
-			if err != nil {
-				r.log.WithError(err).Warn("failed to create tag when creating dataset in database")
-			}
-		}
-		createdDatasets = append(createdDatasets, datasetFromSQL(created))
+		createdDatasets = append(createdDatasets, created)
 	}
 	if err := tx.Commit(); err != nil {
+		r.log.WithError(err).Error("Commit creation of dataset transaction")
 		return nil, err
 	}
 	return createdDatasets, nil

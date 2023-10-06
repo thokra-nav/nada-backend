@@ -73,6 +73,13 @@ func (r *mutationResolver) CreateDataproduct(ctx context.Context, input models.N
 		if input.Datasets[i].Description != nil && *input.Datasets[i].Description != "" {
 			*input.Datasets[i].Description = html.EscapeString(*input.Datasets[i].Description)
 		}
+		pseudonimizedDataset, err:= r.CreatePseudoynimizedView(ctx, models.ToNewDataset(uuid.New(), &ds))
+		if err != nil{
+			return nil, err
+		}
+		if pseudonimizedDataset!= nil{
+			input.Datasets = append(input.Datasets, *models.ToNewDatasetForNewDataproduct(pseudonimizedDataset))
+		}
 	}
 
 	dp, err := r.repo.CreateDataproduct(ctx, input, user)

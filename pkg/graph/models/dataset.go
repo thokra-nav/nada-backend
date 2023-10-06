@@ -100,3 +100,43 @@ type UpdateDataset struct {
 type DatasetServices struct {
 	Metabase *string `json:"metabase"`
 }
+
+func ToNewDataset(dpID uuid.UUID, dsForDP *NewDatasetForNewDataproduct) *NewDataset {
+	if dsForDP.Keywords == nil {
+		dsForDP.Keywords = []string{}
+	}
+	return &NewDataset{
+		DataproductID:            dpID,
+		Name:                     dsForDP.Name,
+		Description:              dsForDP.Description,
+		Repo:                     dsForDP.Repo,
+		Pii:                      dsForDP.Pii,
+		Keywords:                 dsForDP.Keywords,
+		BigQuery:                 dsForDP.Bigquery,
+		AnonymisationDescription: dsForDP.AnonymisationDescription,
+		GrantAllUsers:            dsForDP.GrantAllUsers,
+		TargetUser:               dsForDP.TargetUser,
+		CreatePseudoynimizedView: dsForDP.CreatePseudoynimizedView,
+		Metadata:                 dsForDP.Metadata,
+	}
+}
+
+func ToNewDatasetForNewDataproduct(ds *NewDataset) *NewDatasetForNewDataproduct {
+	if ds.Keywords == nil {
+		ds.Keywords = []string{}
+	}
+
+	return &NewDatasetForNewDataproduct{
+		Name:                     ds.Name,
+		Description:              ds.Description,
+		Repo:                     ds.Repo,
+		Pii:                      ds.Pii,
+		Keywords:                 ds.Keywords,
+		Bigquery:                 ds.BigQuery,
+		AnonymisationDescription: ds.AnonymisationDescription,
+		GrantAllUsers:            ds.GrantAllUsers,
+		TargetUser:               ds.TargetUser,
+		CreatePseudoynimizedView: ds.CreatePseudoynimizedView,
+		Metadata:                 ds.Metadata,
+	}
+}

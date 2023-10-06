@@ -3,14 +3,12 @@ package database
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/navikt/nada-backend/pkg/auth"
 	"github.com/navikt/nada-backend/pkg/database/gensql"
 	"github.com/navikt/nada-backend/pkg/graph/models"
-	"github.com/tabbed/pqtype"
 )
 
 func (r *Repo) GetDataproducts(ctx context.Context, limit, offset int) ([]*models.Dataproduct, error) {
@@ -85,12 +83,7 @@ func (r *Repo) GetDataproduct(ctx context.Context, id uuid.UUID) (*models.Datapr
 	return dataproductFromSQL(res), nil
 }
 
-func (r *Repo) CreateDataproduct(ctx context.Context, dp models.NewDataproduct, user *auth.User) (*models.Dataproduct, error) {
-	tx, err := r.db.Begin()
-	if err != nil {
-		return nil, err
-	}
-
+func (r *Repo) createDataproduct(ctx context.Context, tx *sql.Tx, dp models.NewDataproduct, user *auth.User) (*models.Dataproduct, error) {
 	querier := r.querier.WithTx(tx)
 
 	dataproduct, err := querier.CreateDataproduct(ctx, gensql.CreateDataproductParams{
@@ -109,86 +102,36 @@ func (r *Repo) CreateDataproduct(ctx context.Context, dp models.NewDataproduct, 
 		}
 		return nil, err
 	}
+	return dataproductFromSQL(dataproduct), nil
+}
+
+func (r *Repo) CreateDataproduct(ctx context.Context, dp models.NewDataproduct, user *auth.User) (*models.Dataproduct, error) {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	dataproduct, err := r.createDataproduct(ctx, tx, dp, user)
+	if err != nil {
+		return nil, err
+	}
 
 	for _, ds := range dp.Datasets {
-		if ds.Keywords == nil {
-			ds.Keywords = []string{}
-		}
-
-		dataset, err := querier.CreateDataset(ctx, gensql.CreateDatasetParams{
-			Name:                     ds.Name,
-			Description:              ptrToNullString(ds.Description),
-			DataproductID:            dataproduct.ID,
-			Repo:                     ptrToNullString(ds.Repo),
-			Keywords:                 ds.Keywords,
-			Pii:                      gensql.PiiLevel(ds.Pii.String()),
-			Type:                     gensql.DatasourceTypeBigquery,
-			Slug:                     slugify(nil, ds.Name),
-			AnonymisationDescription: ptrToNullString(ds.AnonymisationDescription),
-			TargetUser:               ptrToNullString(ds.TargetUser),
-		})
+		_, err := r.createDataset(ctx, tx, models.ToNewDataset(dataproduct.ID, &ds), user)
 		if err != nil {
 			if err := tx.Rollback(); err != nil {
 				r.log.WithError(err).Error("rolling back dataset creation")
 			}
 			return nil, err
 		}
-
-		schemaJSON, err := json.Marshal(ds.Metadata.Schema.Columns)
-		if err != nil {
-			return nil, fmt.Errorf("marshalling schema: %w", err)
-		}
-
-		_, err = querier.CreateBigqueryDatasource(ctx, gensql.CreateBigqueryDatasourceParams{
-			DatasetID:    dataset.ID,
-			ProjectID:    ds.Bigquery.ProjectID,
-			Dataset:      ds.Bigquery.Dataset,
-			TableName:    ds.Bigquery.Table,
-			Schema:       pqtype.NullRawMessage{RawMessage: schemaJSON, Valid: len(schemaJSON) > 4},
-			LastModified: ds.Metadata.LastModified,
-			Created:      ds.Metadata.Created,
-			Expires:      sql.NullTime{Time: ds.Metadata.Expires, Valid: !ds.Metadata.Expires.IsZero()},
-			TableType:    string(ds.Metadata.TableType),
-			PiiTags: pqtype.NullRawMessage{
-				RawMessage: []byte(ptrToString(ds.Bigquery.PiiTags)),
-				Valid:      len(ptrToString(ds.Bigquery.PiiTags)) > 4,
-			},
-		})
-		if err != nil {
-			if err := tx.Rollback(); err != nil {
-				r.log.WithError(err).Error("rolling back datasource_bigquery creation")
-			}
-			return nil, err
-		}
-
-		if ds.GrantAllUsers != nil && *ds.GrantAllUsers {
-			_, err = querier.GrantAccessToDataset(ctx, gensql.GrantAccessToDatasetParams{
-				DatasetID: dataset.ID,
-				Expires:   sql.NullTime{},
-				Subject:   emailOfSubjectToLower("group:all-users@nav.no"),
-				Granter:   user.Email,
-			})
-			if err != nil {
-				if err := tx.Rollback(); err != nil {
-					r.log.WithError(err).Error("Rolling back dataset and datasource_bigquery transaction")
-				}
-				return nil, err
-			}
-		}
-
-		for _, keyword := range ds.Keywords {
-			err = querier.CreateTagIfNotExist(ctx, keyword)
-			if err != nil {
-				r.log.WithError(err).Warn("Failed to create tag when creating dataproduct in database")
-			}
-		}
 	}
 
 	if err := tx.Commit(); err != nil {
+		r.log.WithError(err).Error("Commit dataproduct creation")
 		return nil, err
 	}
 
-	return dataproductFromSQL(dataproduct), nil
+	return dataproduct, nil
 }
 
 func (r *Repo) UpdateDataproduct(ctx context.Context, id uuid.UUID, new models.UpdateDataproduct) (*models.Dataproduct, error) {

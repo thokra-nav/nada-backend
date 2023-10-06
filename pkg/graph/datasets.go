@@ -28,7 +28,7 @@ func getPIIColumns(piiTags *string) ([]string, error) {
 	return piiColumns, nil
 }
 
-func (r *mutationResolver) CreatePseudoynimizedView(ctx context.Context, input models.NewDataset) (*models.NewDataset, error) {
+func (r *mutationResolver) CreatePseudoynimizedView(ctx context.Context, input *models.NewDataset) (*models.NewDataset, error) {
 	if !input.CreatePseudoynimizedView {
 		return nil, nil
 	}

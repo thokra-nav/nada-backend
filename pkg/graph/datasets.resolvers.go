@@ -141,7 +141,7 @@ func (r *mutationResolver) CreateDataset(ctx context.Context, input models.NewDa
 		*input.Description = html.EscapeString(*input.Description)
 	}
 
-	pseudonimizedView, err := r.CreatePseudoynimizedView(ctx, input)
+	pseudonimizedView, err := r.CreatePseudoynimizedView(ctx, &input)
 	if err != nil {
 		//TODO: should we still create the dataset?
 		r.log.WithError(err).Warn("failed to create pseudonynized view. the dataset with pii will still be created")
