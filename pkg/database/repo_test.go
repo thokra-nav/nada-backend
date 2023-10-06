@@ -7,7 +7,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"os"
 	"testing"
@@ -111,7 +110,7 @@ func TestRepo(t *testing.T) {
 			DataproductID: createdproduct.ID,
 		}
 
-		createdDataset, err := repo.CreateDataset(context.Background(), data, user)
+		createdDatasets, err := repo.CreateDatasets(context.Background(), []*models.NewDataset{&data}, user)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -122,12 +121,12 @@ func TestRepo(t *testing.T) {
 			DataproductID: &createdproduct.ID,
 		}
 
-		updatedDataset, err := repo.UpdateDataset(context.Background(), createdDataset.ID, updated)
+		updatedDataset, err := repo.UpdateDataset(context.Background(), createdDatasets[0].ID, updated)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if updatedDataset.ID != createdDataset.ID {
+		if updatedDataset.ID != createdDatasets[0].ID {
 			t.Fatal("updating dataset should not alter dataset ID")
 		}
 
@@ -137,16 +136,16 @@ func TestRepo(t *testing.T) {
 	})
 
 	t.Run("deletes datasets", func(t *testing.T) {
-		createdDataset, err := repo.CreateDataset(context.Background(), newDataset, user)
+		createdDatasets, err := repo.CreateDatasets(context.Background(), []*models.NewDataset{&newDataset}, user)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if err := repo.DeleteDataset(context.Background(), createdDataset.ID); err != nil {
+		if err := repo.DeleteDataset(context.Background(), createdDatasets[0].ID); err != nil {
 			t.Fatal(err)
 		}
 
-		dataset, err := repo.GetDataset(context.Background(), createdDataset.ID)
+		dataset, err := repo.GetDataset(context.Background(), createdDatasets[0].ID)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			t.Fatal(err)
 		}
@@ -158,13 +157,12 @@ func TestRepo(t *testing.T) {
 
 	t.Run("handles access grants", func(t *testing.T) {
 		dpWithUserAccess := func(ti time.Time, subj string) {
-			dp, err := repo.CreateDataset(context.Background(), newDataset, user)
+			datasets, err := repo.CreateDatasets(context.Background(), []*models.NewDataset{&newDataset}, user)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			fmt.Println(dp)
-			_, err = repo.GrantAccessToDataset(context.Background(), dp.ID, &ti, subj, "")
+			_, err = repo.GrantAccessToDataset(context.Background(), datasets[0].ID, &ti, subj, "")
 			if err != nil {
 				t.Fatal(err)
 			}
