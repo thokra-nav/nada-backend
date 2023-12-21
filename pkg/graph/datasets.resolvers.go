@@ -53,6 +53,7 @@ func (r *datasetResolver) Owner(ctx context.Context, obj *models.Dataset) (*mode
 
 // Datasource is the resolver for the datasource field.
 func (r *datasetResolver) Datasource(ctx context.Context, obj *models.Dataset) (models.Datasource, error) {
+	fmt.Println("datasource resolver")
 	return r.repo.GetBigqueryDatasource(ctx, obj.ID, false)
 }
 
@@ -115,6 +116,19 @@ func (r *datasetResolver) Services(ctx context.Context, obj *models.Dataset) (*m
 // Mappings is the resolver for the mappings field.
 func (r *datasetResolver) Mappings(ctx context.Context, obj *models.Dataset) ([]models.MappingService, error) {
 	return r.repo.GetDatasetMappings(ctx, obj.ID)
+}
+
+// Description is the resolver for the description field.
+func (r *datasetCompleteResolver) Description(ctx context.Context, obj *models.DatasetComplete, raw *bool) (string, error) {
+	if obj.Description == nil {
+		return "", nil
+	}
+
+	if raw != nil && *raw {
+		return html.UnescapeString(*obj.Description), nil
+	}
+
+	return *obj.Description, nil
 }
 
 // CreateDataset is the resolver for the createDataset field.
@@ -302,5 +316,11 @@ func (r *Resolver) BigQuery() generated.BigQueryResolver { return &bigQueryResol
 // Dataset returns generated.DatasetResolver implementation.
 func (r *Resolver) Dataset() generated.DatasetResolver { return &datasetResolver{r} }
 
+// DatasetComplete returns generated.DatasetCompleteResolver implementation.
+func (r *Resolver) DatasetComplete() generated.DatasetCompleteResolver {
+	return &datasetCompleteResolver{r}
+}
+
 type bigQueryResolver struct{ *Resolver }
 type datasetResolver struct{ *Resolver }
+type datasetCompleteResolver struct{ *Resolver }

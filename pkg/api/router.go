@@ -1,6 +1,10 @@
 package api
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -23,6 +27,34 @@ type HTTPAPI interface {
 	Login(w http.ResponseWriter, r *http.Request)
 	Callback(w http.ResponseWriter, r *http.Request)
 	Logout(w http.ResponseWriter, r *http.Request)
+}
+
+type graphqlRequest struct {
+	Query     string                 `json:"query"`
+	Variables map[string]interface{} `json:"variables"`
+}
+
+func logMW(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, "cannot read body", http.StatusBadRequest)
+			return
+		}
+
+		r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+
+		var req graphqlRequest
+		if err := json.Unmarshal(body, &req); err != nil {
+			http.Error(w, "cannot unmarshal body", http.StatusBadRequest)
+			return
+		}
+
+		fmt.Printf("GraphQL Query: %v, Variables: %v\n", req.Query, req.Variables)
+
+		// Call the next handler
+		next.ServeHTTP(w, r)
+	})
 }
 
 func New(
@@ -49,7 +81,7 @@ func New(
 	router.Use(corsMW)
 	router.Route("/api", func(r chi.Router) {
 		r.Handle("/", playground.Handler("GraphQL playground", "/api/query"))
-		r.Handle("/query", authMW(gqlServer))
+		r.Handle("/query", logMW((gqlServer)))
 		r.HandleFunc("/login", httpAPI.Login)
 		r.HandleFunc("/oauth2/callback", httpAPI.Callback)
 		r.HandleFunc("/logout", httpAPI.Logout)

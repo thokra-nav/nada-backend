@@ -8,9 +8,11 @@ package gensql
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
+	"github.com/sqlc-dev/pqtype"
 )
 
 const createDataproduct = `-- name: CreateDataproduct :one
@@ -186,6 +188,166 @@ func (q *Queries) GetDataproduct(ctx context.Context, id uuid.UUID) (Dataproduct
 		&i.TeamID,
 	)
 	return i, err
+}
+
+const getDataproductComplete = `-- name: GetDataproductComplete :many
+SELECT 
+dsrc.id AS dsrc_id,  
+dsrc.created as dsrc_created,
+dsrc.last_modified as dsrc_last_modified,
+dsrc.expires as dsrc_expires,
+dsrc.description as dsrc_description,
+dsrc.missing_since as dsrc_missing_since,
+dsrc.pii_tags as pii_tags,
+dsrc.project_id as project_id,
+dsrc.dataset as dataset,
+dsrc.table_name as table_name,
+dsrc.table_type as table_type,
+dsrc.pseudo_columns as pseudo_columns,
+dsrc.dataset_id as dsrc_dataset_id,
+dsrc.schema as dsrc_schema,
+dpds.ds_id, dpds.ds_name, dpds.ds_description, dpds.ds_created, dpds.ds_last_modified, dpds.ds_slug, dpds.keywords, dpds.id, dpds.name, dpds.description, dpds."group", dpds.created, dpds.last_modified, dpds.tsv_document, dpds.slug, dpds.teamkatalogen_url, dpds.team_contact, dpds.team_id,
+dm.services,
+da.id as da_id,
+da.subject as da_subject,
+da.granter as da_granter,
+da.expires as da_expires,
+da.created as da_created,
+da.revoked as da_revoked,
+da.access_request_id as access_request_id,
+mm.database_id as mm_database_id
+FROM 
+(
+	SELECT 
+    ds.id AS ds_id, 
+    ds.name as ds_name, 
+    ds.description as ds_description,
+    ds.created as ds_created,
+    ds.last_modified as ds_last_modified,
+    ds.slug as ds_slug,
+    ds.keywords as keywords,
+    rdp.id, rdp.name, rdp.description, rdp."group", rdp.created, rdp.last_modified, rdp.tsv_document, rdp.slug, rdp.teamkatalogen_url, rdp.team_contact, rdp.team_id 
+    FROM 
+	(
+		(SELECT id, name, description, "group", created, last_modified, tsv_document, slug, teamkatalogen_url, team_contact, team_id FROM dataproducts dp WHERE dp.id= $1) rdp 
+		LEFT JOIN datasets ds ON ds.dataproduct_id = rdp.id
+	)
+) dpds 
+LEFT JOIN 
+    (SELECT dataset_id, project_id, dataset, table_name, schema, last_modified, created, expires, table_type, description, pii_tags, missing_since, id, is_reference, pseudo_columns, deleted FROM datasource_bigquery WHERE is_reference = false) dsrc
+ON dpds.ds_id = dsrc.dataset_id 
+LEFT JOIN third_party_mappings dm ON dpds.ds_id = dm.dataset_id
+LEFT JOIN dataset_access da ON dpds.ds_id = da.dataset_id
+LEFT JOIN metabase_metadata mm ON mm.dataset_id = dpds.ds_id AND mm.deleted_at IS NULL
+`
+
+type GetDataproductCompleteRow struct {
+	DsrcID           uuid.UUID
+	DsrcCreated      time.Time
+	DsrcLastModified time.Time
+	DsrcExpires      sql.NullTime
+	DsrcDescription  sql.NullString
+	DsrcMissingSince sql.NullTime
+	PiiTags          pqtype.NullRawMessage
+	ProjectID        string
+	Dataset          string
+	TableName        string
+	TableType        string
+	PseudoColumns    []string
+	DsrcDatasetID    uuid.UUID
+	DsrcSchema       pqtype.NullRawMessage
+	DsID             uuid.NullUUID
+	DsName           sql.NullString
+	DsDescription    sql.NullString
+	DsCreated        sql.NullTime
+	DsLastModified   sql.NullTime
+	DsSlug           sql.NullString
+	Keywords         []string
+	ID               uuid.UUID
+	Name             string
+	Description      sql.NullString
+	Group            string
+	Created          time.Time
+	LastModified     time.Time
+	TsvDocument      interface{}
+	Slug             string
+	TeamkatalogenUrl sql.NullString
+	TeamContact      sql.NullString
+	TeamID           sql.NullString
+	Services         []string
+	DaID             uuid.NullUUID
+	DaSubject        sql.NullString
+	DaGranter        sql.NullString
+	DaExpires        sql.NullTime
+	DaCreated        sql.NullTime
+	DaRevoked        sql.NullTime
+	AccessRequestID  uuid.NullUUID
+	MmDatabaseID     sql.NullInt32
+}
+
+func (q *Queries) GetDataproductComplete(ctx context.Context, id uuid.UUID) ([]GetDataproductCompleteRow, error) {
+	rows, err := q.db.QueryContext(ctx, getDataproductComplete, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetDataproductCompleteRow{}
+	for rows.Next() {
+		var i GetDataproductCompleteRow
+		if err := rows.Scan(
+			&i.DsrcID,
+			&i.DsrcCreated,
+			&i.DsrcLastModified,
+			&i.DsrcExpires,
+			&i.DsrcDescription,
+			&i.DsrcMissingSince,
+			&i.PiiTags,
+			&i.ProjectID,
+			&i.Dataset,
+			&i.TableName,
+			&i.TableType,
+			pq.Array(&i.PseudoColumns),
+			&i.DsrcDatasetID,
+			&i.DsrcSchema,
+			&i.DsID,
+			&i.DsName,
+			&i.DsDescription,
+			&i.DsCreated,
+			&i.DsLastModified,
+			&i.DsSlug,
+			pq.Array(&i.Keywords),
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.Group,
+			&i.Created,
+			&i.LastModified,
+			&i.TsvDocument,
+			&i.Slug,
+			&i.TeamkatalogenUrl,
+			&i.TeamContact,
+			&i.TeamID,
+			pq.Array(&i.Services),
+			&i.DaID,
+			&i.DaSubject,
+			&i.DaGranter,
+			&i.DaExpires,
+			&i.DaCreated,
+			&i.DaRevoked,
+			&i.AccessRequestID,
+			&i.MmDatabaseID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getDataproducts = `-- name: GetDataproducts :many

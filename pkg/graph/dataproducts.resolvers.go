@@ -51,6 +51,19 @@ func (r *dataproductResolver) Datasets(ctx context.Context, obj *models.Dataprod
 	return r.repo.GetDatasetsInDataproduct(ctx, obj.ID)
 }
 
+// Description is the resolver for the description field.
+func (r *dataproductCompleteResolver) Description(ctx context.Context, obj *models.DataproductComplete, raw *bool) (string, error) {
+	if obj.Description == nil {
+		return "", nil
+	}
+
+	if raw != nil && *raw {
+		return html.UnescapeString(*obj.Description), nil
+	}
+
+	return *obj.Description, nil
+}
+
 // CreateDataproduct is the resolver for the createDataproduct field.
 func (r *mutationResolver) CreateDataproduct(ctx context.Context, input models.NewDataproduct) (*models.Dataproduct, error) {
 	user := auth.GetUser(ctx)
@@ -103,6 +116,11 @@ func (r *queryResolver) Dataproduct(ctx context.Context, id uuid.UUID) (*models.
 	return r.repo.GetDataproduct(ctx, id)
 }
 
+// DataproductComplete is the resolver for the dataproductComplete field.
+func (r *queryResolver) DataproductComplete(ctx context.Context, id uuid.UUID) (*models.DataproductComplete, error) {
+	return r.repo.GetDataproductComplete(ctx, id)
+}
+
 // Dataproducts is the resolver for the dataproducts field.
 func (r *queryResolver) Dataproducts(ctx context.Context, limit *int, offset *int, service *models.MappingService) ([]*models.Dataproduct, error) {
 	l, o := pagination(limit, offset)
@@ -118,4 +136,10 @@ func (r *queryResolver) GroupStats(ctx context.Context, limit *int, offset *int)
 // Dataproduct returns generated.DataproductResolver implementation.
 func (r *Resolver) Dataproduct() generated.DataproductResolver { return &dataproductResolver{r} }
 
+// DataproductComplete returns generated.DataproductCompleteResolver implementation.
+func (r *Resolver) DataproductComplete() generated.DataproductCompleteResolver {
+	return &dataproductCompleteResolver{r}
+}
+
 type dataproductResolver struct{ *Resolver }
+type dataproductCompleteResolver struct{ *Resolver }

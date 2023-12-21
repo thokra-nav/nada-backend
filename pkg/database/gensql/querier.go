@@ -58,6 +58,7 @@ type Querier interface {
 	GetBigqueryDatasources(ctx context.Context) ([]DatasourceBigquery, error)
 	GetDashboard(ctx context.Context, id string) (Dashboard, error)
 	GetDataproduct(ctx context.Context, id uuid.UUID) (Dataproduct, error)
+	GetDataproductComplete(ctx context.Context, id uuid.UUID) ([]GetDataproductCompleteRow, error)
 	GetDataproducts(ctx context.Context, arg GetDataproductsParams) ([]Dataproduct, error)
 	GetDataproductsByGroups(ctx context.Context, groups []string) ([]Dataproduct, error)
 	GetDataproductsByIDs(ctx context.Context, ids []uuid.UUID) ([]Dataproduct, error)

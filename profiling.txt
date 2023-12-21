@@ -1,0 +1,455 @@
+STORAGE_EMULATOR_HOST=http://localhost:8082/storage/v1/ GCP_QUARTO_STORAGE_BUCKET_NAME=nada-quarto-storage-dev DASHBOARD_PA_ID=Mocked-001 go run ./cmd/nada-backend \
+--bind-address=127.0.0.1:8080 \
+--hostname=localhost \
+--mock-auth \
+--skip-metadata-sync \
+--quarto-bucket=nada-quarto-storage-dev \
+--log-level=debug \
+--slack-token=
+ExecContext called with query:  ClearTeamProjectsCache  and args: []
+QueryRowContext called with query:  AddTeamProject  and args: [team team-dev-1337]
+QueryRowContext called with query:  AddTeamProject  and args: [nada dataplattform-dev-9da3]
+QueryRowContext called with query:  AddTeamProject  and args: [aura aura-dev-d9f5]
+QueryContext called with query:  ListUnrevokedExpiredAccessEntries  and args: []
+ExecContext called with query:  CleanupStoryDrafts  and args: []
+QueryContext called with query:  GetJoinableViewsToBeDeletedWithRefDatasource  and args: []
+QueryContext called with query:  GetJoinableViewsWithReference  and args: []
+QueryContext called with query:  GetPseudoDatasourcesToDelete  and args: []
+GraphQL Query: query Dataproduct($id: ID!, $rawDesc: Boolean) {
+  dataproduct(id: $id) {
+    id
+    lastModified
+    name
+    description(raw: $rawDesc)
+    created
+    slug
+    owner {
+      group
+      teamkatalogenURL
+      teamContact
+      productAreaID
+      teamID
+      __typename
+    }
+    keywords
+    datasets {
+      id
+      dataproductID
+      lastModified
+      name
+      description
+      created
+      repo
+      slug
+      pii
+      keywords
+      mappings
+      anonymisation_description
+      targetUser
+      services {
+        metabase
+        __typename
+      }
+      owner {
+        group
+        teamkatalogenURL
+        teamContact
+        __typename
+      }
+      access {
+        id
+        subject
+        granter
+        expires
+        created
+        revoked
+        accessRequestID
+        accessRequest {
+          id
+          polly {
+            id
+            name
+            externalID
+            url
+            __typename
+          }
+          __typename
+        }
+        __typename
+      }
+      datasource {
+        type: __typename
+        ... on BigQuery {
+          projectID
+          dataset
+          table
+          lastModified
+          created
+          expires
+          tableType
+          description
+          schema {
+            name
+            description
+            mode
+            type
+            __typename
+          }
+          piiTags
+          pseudoColumns
+          __typename
+        }
+      }
+      __typename
+    }
+    owner {
+      group
+      teamkatalogenURL
+      teamContact
+      __typename
+    }
+    __typename
+  }
+}, Variables: map[id:eba004e6-22e4-43b2-a57c-3acf287242aa]
+QueryRowContext called with query:  GetDataproduct  and args: [eba004e6-22e4-43b2-a57c-3acf287242aa]
+QueryContext called with query:  GetDatasetsInDataproduct  and args: [eba004e6-22e4-43b2-a57c-3acf287242aa]
+QueryContext called with query:  GetDatasetsInDataproduct  and args: [eba004e6-22e4-43b2-a57c-3acf287242aa]
+QueryRowContext called with query:  GetBigqueryDatasource  and args: [8f879dff-7a1d-4215-a3a3-159f68e6b514 false]
+QueryRowContext called with query:  GetMetabaseMetadata  and args: [8f879dff-7a1d-4215-a3a3-159f68e6b514]
+QueryRowContext called with query:  GetBigqueryDatasource  and args: [a6d9e9db-1ab3-4d82-b560-bb936c580a5f false]
+QueryRowContext called with query:  GetDataproduct  and args: [eba004e6-22e4-43b2-a57c-3acf287242aa]
+QueryRowContext called with query:  GetDatasetMappings  and args: [a6d9e9db-1ab3-4d82-b560-bb936c580a5f]
+QueryRowContext called with query:  GetMetabaseMetadata  and args: [a6d9e9db-1ab3-4d82-b560-bb936c580a5f]
+QueryRowContext called with query:  GetDatasetMappings  and args: [8f879dff-7a1d-4215-a3a3-159f68e6b514]
+QueryRowContext called with query:  GetBigqueryDatasource  and args: [10757585-0089-4ce6-b77a-f9ed81894d8b false]
+QueryRowContext called with query:  GetDataproduct  and args: [eba004e6-22e4-43b2-a57c-3acf287242aa]
+QueryRowContext called with query:  GetMetabaseMetadata  and args: [10757585-0089-4ce6-b77a-f9ed81894d8b]
+QueryContext called with query:  ListAccessToDataset  and args: [10757585-0089-4ce6-b77a-f9ed81894d8b]
+QueryContext called with query:  ListAccessToDataset  and args: [a6d9e9db-1ab3-4d82-b560-bb936c580a5f]
+QueryRowContext called with query:  GetDataproduct  and args: [eba004e6-22e4-43b2-a57c-3acf287242aa]
+QueryContext called with query:  ListAccessToDataset  and args: [8f879dff-7a1d-4215-a3a3-159f68e6b514]
+QueryRowContext called with query:  GetDatasetMappings  and args: [10757585-0089-4ce6-b77a-f9ed81894d8b]
+QueryRowContext called with query:  GetBigqueryDatasource  and args: [8f879dff-7a1d-4215-a3a3-159f68e6b514 false]
+QueryRowContext called with query:  GetDataproduct  and args: [eba004e6-22e4-43b2-a57c-3acf287242aa]
+QueryRowContext called with query:  GetDataproduct  and args: [eba004e6-22e4-43b2-a57c-3acf287242aa]
+QueryRowContext called with query:  GetBigqueryDatasource  and args: [a6d9e9db-1ab3-4d82-b560-bb936c580a5f false]
+QueryRowContext called with query:  GetDataproduct  and args: [eba004e6-22e4-43b2-a57c-3acf287242aa]
+QueryRowContext called with query:  GetBigqueryDatasource  and args: [10757585-0089-4ce6-b77a-f9ed81894d8b false]
+GraphQL Query: query searchContent($q: SearchQuery!) {
+  search(q: $q) {
+    excerpt
+    result {
+      ... on Dataproduct {
+        __typename
+        id
+        name
+        description
+        created
+        lastModified
+        keywords
+        slug
+        datasets {
+          name
+          datasource {
+            type: __typename
+            ... on BigQuery {
+              lastModified
+              __typename
+            }
+          }
+          __typename
+        }
+        owner {
+          group
+          teamkatalogenURL
+          teamContact
+          __typename
+        }
+      }
+      __typename
+    }
+    __typename
+  }
+}, Variables: map[q:map[limit:6]]
+QueryContext called with query:  Search  and args: [ 0xc000930ea0 0xc000930eb8 0xc000930ed0 0xc000930ee8 0xc000930f18 0 6]
+QueryContext called with query:  GetDataproductsByIDs  and args: [{[cf0fcca8-46e3-432b-9940-672b0218eecf a5822b1a-c9d4-4796-9010-4bf5cc74a858 e6c2896c-f625-4892-ae05-3cf846ad285e 81dd8d1a-3134-41b0-b42c-c53eede72902 44a535fa-8dc2-4b43-99d5-7c4bb7fc8b8c da60f5d5-86bd-469c-ba8c-7d61b7f5a393]}]
+QueryContext called with query:  GetStoriesByIDs  and args: [{[]}]
+QueryContext called with query:  GetQuartoStoriesByIDs  and args: [{[]}]
+QueryContext called with query:  GetDatasetsInDataproduct  and args: [cf0fcca8-46e3-432b-9940-672b0218eecf]
+QueryContext called with query:  GetDatasetsInDataproduct  and args: [da60f5d5-86bd-469c-ba8c-7d61b7f5a393]
+QueryContext called with query:  GetDatasetsInDataproduct  and args: [44a535fa-8dc2-4b43-99d5-7c4bb7fc8b8c]
+QueryContext called with query:  GetDatasetsInDataproduct  and args: [44a535fa-8dc2-4b43-99d5-7c4bb7fc8b8c]
+QueryContext called with query:  GetDatasetsInDataproduct  and args: [da60f5d5-86bd-469c-ba8c-7d61b7f5a393]
+QueryContext called with query:  GetDatasetsInDataproduct  and args: [cf0fcca8-46e3-432b-9940-672b0218eecf]
+QueryContext called with query:  GetDatasetsInDataproduct  and args: [a5822b1a-c9d4-4796-9010-4bf5cc74a858]
+QueryContext called with query:  GetDatasetsInDataproduct  and args: [a5822b1a-c9d4-4796-9010-4bf5cc74a858]
+QueryContext called with query:  GetDatasetsInDataproduct  and args: [e6c2896c-f625-4892-ae05-3cf846ad285e]
+QueryContext called with query:  GetDatasetsInDataproduct  and args: [e6c2896c-f625-4892-ae05-3cf846ad285e]
+QueryContext called with query:  GetDatasetsInDataproduct  and args: [81dd8d1a-3134-41b0-b42c-c53eede72902]
+QueryContext called with query:  GetDatasetsInDataproduct  and args: [81dd8d1a-3134-41b0-b42c-c53eede72902]
+QueryRowContext called with query:  GetBigqueryDatasource  and args: [e9f14bab-0fb4-4af9-ad7a-612fcb5323e5 false]
+QueryRowContext called with query:  GetBigqueryDatasource  and args: [c3657abe-3ee5-45ef-a0ae-6eadcb84dc09 false]
+QueryRowContext called with query:  GetBigqueryDatasource  and args: [2cc1e41c-3010-4367-af65-1aecb0ee9f8a false]
+QueryRowContext called with query:  GetBigqueryDatasource  and args: [8083932f-b49f-41de-9867-f33bbb2a2a99 false]
+QueryRowContext called with query:  GetBigqueryDatasource  and args: [15c6d5e5-4008-4a54-a4c0-3f6468a67ce8 false]
+QueryRowContext called with query:  GetBigqueryDatasource  and args: [9441da59-df24-483f-bd4d-a312da3827f9 false]
+QueryRowContext called with query:  GetBigqueryDatasource  and args: [42eecfc7-4762-4ca1-979b-8531de3545e8 false]
+QueryRowContext called with query:  GetBigqueryDatasource  and args: [f43fa708-0402-4758-bd59-d46a1efe449e false]
+QueryRowContext called with query:  GetBigqueryDatasource  and args: [013a091b-10c6-4bbd-a065-3899049071e1 false]
+QueryRowContext called with query:  GetBigqueryDatasource  and args: [caee3761-33a1-4f8b-94d2-b7288f2953e4 false]
+GraphQL Query: query Dataproduct($id: ID!, $rawDesc: Boolean) {
+  dataproduct(id: $id) {
+    id
+    lastModified
+    name
+    description(raw: $rawDesc)
+    created
+    slug
+    owner {
+      group
+      teamkatalogenURL
+      teamContact
+      productAreaID
+      teamID
+      __typename
+    }
+    keywords
+    datasets {
+      id
+      dataproductID
+      lastModified
+      name
+      description
+      created
+      repo
+      slug
+      pii
+      keywords
+      mappings
+      anonymisation_description
+      targetUser
+      services {
+        metabase
+        __typename
+      }
+      owner {
+        group
+        teamkatalogenURL
+        teamContact
+        __typename
+      }
+      access {
+        id
+        subject
+        granter
+        expires
+        created
+        revoked
+        accessRequestID
+        accessRequest {
+          id
+          polly {
+            id
+            name
+            externalID
+            url
+            __typename
+          }
+          __typename
+        }
+        __typename
+      }
+      datasource {
+        type: __typename
+        ... on BigQuery {
+          projectID
+          dataset
+          table
+          lastModified
+          created
+          expires
+          tableType
+          description
+          schema {
+            name
+            description
+            mode
+            type
+            __typename
+          }
+          piiTags
+          pseudoColumns
+          __typename
+        }
+      }
+      __typename
+    }
+    owner {
+      group
+      teamkatalogenURL
+      teamContact
+      __typename
+    }
+    __typename
+  }
+}, Variables: map[id:eba004e6-22e4-43b2-a57c-3acf287242aa rawDesc:false]
+QueryRowContext called with query:  GetDataproduct  and args: [eba004e6-22e4-43b2-a57c-3acf287242aa]
+GraphQL Query: query userInfoDetails {
+  userInfo {
+    name
+    email
+    dataproducts {
+      id
+      name
+      keywords
+      slug
+      owner {
+        group
+        __typename
+      }
+      __typename
+    }
+    accessable {
+      owned {
+        id
+        name
+        dataproduct {
+          name
+          slug
+          __typename
+        }
+        dataproductID
+        keywords
+        slug
+        owner {
+          group
+          __typename
+        }
+        __typename
+      }
+      granted {
+        id
+        name
+        dataproduct {
+          name
+          slug
+          __typename
+        }
+        dataproductID
+        keywords
+        slug
+        owner {
+          group
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    loginExpiration
+    groups {
+      name
+      email
+      __typename
+    }
+    nadaTokens {
+      team
+      token
+      __typename
+    }
+    googleGroups {
+      name
+      email
+      __typename
+    }
+    allGoogleGroups {
+      name
+      email
+      __typename
+    }
+    gcpProjects {
+      id
+      group {
+        name
+        email
+        __typename
+      }
+      __typename
+    }
+    stories {
+      id
+      name
+      keywords
+      owner {
+        group
+        teamkatalogenURL
+        __typename
+      }
+      __typename
+    }
+    quartoStories {
+      id
+      name
+      description
+      keywords
+      group
+      teamkatalogenURL
+      __typename
+    }
+    insightProducts {
+      id
+      name
+      description
+      type
+      link
+      keywords
+      group
+      teamkatalogenURL
+      __typename
+    }
+    accessRequests {
+      id
+      datasetID
+      subject
+      subjectType
+      granter
+      status
+      created
+      expires
+      owner
+      polly {
+        id
+        name
+        externalID
+        url
+        __typename
+      }
+      reason
+      __typename
+    }
+    __typename
+  }
+}, Variables: map[]
+QueryContext called with query:  GetDatasetsInDataproduct  and args: [eba004e6-22e4-43b2-a57c-3acf287242aa]
+QueryContext called with query:  GetDatasetsInDataproduct  and args: [eba004e6-22e4-43b2-a57c-3acf287242aa]
+QueryRowContext called with query:  GetBigqueryDatasource  and args: [10757585-0089-4ce6-b77a-f9ed81894d8b false]
+QueryRowContext called with query:  GetDataproduct  and args: [eba004e6-22e4-43b2-a57c-3acf287242aa]
+QueryRowContext called with query:  GetDatasetMappings  and args: [10757585-0089-4ce6-b77a-f9ed81894d8b]
+QueryRowContext called with query:  GetBigqueryDatasource  and args: [8f879dff-7a1d-4215-a3a3-159f68e6b514 false]
+QueryContext called with query:  ListAccessToDataset  and args: [10757585-0089-4ce6-b77a-f9ed81894d8b]
+QueryRowContext called with query:  GetBigqueryDatasource  and args: [a6d9e9db-1ab3-4d82-b560-bb936c580a5f false]
+QueryRowContext called with query:  GetMetabaseMetadata  and args: [a6d9e9db-1ab3-4d82-b560-bb936c580a5f]
+QueryRowContext called with query:  GetMetabaseMetadata  and args: [10757585-0089-4ce6-b77a-f9ed81894d8b]
+QueryRowContext called with query:  GetDatasetMappings  and args: [a6d9e9db-1ab3-4d82-b560-bb936c580a5f]
+QueryRowContext called with query:  GetMetabaseMetadata  and args: [8f879dff-7a1d-4215-a3a3-159f68e6b514]
+QueryContext called with query:  ListAccessToDataset  and args: [8f879dff-7a1d-4215-a3a3-159f68e6b514]
+QueryRowContext called with query:  GetDataproduct  and args: [eba004e6-22e4-43b2-a57c-3acf287242aa]
+QueryRowContext called with query:  GetDataproduct  and args: [eba004e6-22e4-43b2-a57c-3acf287242aa]
+QueryContext called with query:  ListAccessToDataset  and args: [a6d9e9db-1ab3-4d82-b560-bb936c580a5f]
+QueryRowContext called with query:  GetDatasetMappings  and args: [8f879dff-7a1d-4215-a3a3-159f68e6b514]
+QueryRowContext called with query:  GetBigqueryDatasource  and args: [10757585-0089-4ce6-b77a-f9ed81894d8b false]
+QueryRowContext called with query:  GetBigqueryDatasource  and args: [a6d9e9db-1ab3-4d82-b560-bb936c580a5f false]
+QueryRowContext called with query:  GetDataproduct  and args: [eba004e6-22e4-43b2-a57c-3acf287242aa]
+QueryRowContext called with query:  GetDataproduct  and args: [eba004e6-22e4-43b2-a57c-3acf287242aa]
+QueryRowContext called with query:  GetBigqueryDatasource  and args: [8f879dff-7a1d-4215-a3a3-159f68e6b514 false]
+QueryRowContext called with query:  GetDataproduct  and args: [eba004e6-22e4-43b2-a57c-3acf287242aa]

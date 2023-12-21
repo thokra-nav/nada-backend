@@ -44,7 +44,9 @@ type ResolverRoot interface {
 	Access() AccessResolver
 	BigQuery() BigQueryResolver
 	Dataproduct() DataproductResolver
+	DataproductComplete() DataproductCompleteResolver
 	Dataset() DatasetResolver
+	DatasetComplete() DatasetCompleteResolver
 	InsightProduct() InsightProductResolver
 	Mutation() MutationResolver
 	Owner() OwnerResolver
@@ -109,6 +111,22 @@ type ComplexityRoot struct {
 		TableType     func(childComplexity int) int
 	}
 
+	BigQueryComplete struct {
+		Created       func(childComplexity int) int
+		Dataset       func(childComplexity int) int
+		Description   func(childComplexity int) int
+		Expires       func(childComplexity int) int
+		ID            func(childComplexity int) int
+		LastModified  func(childComplexity int) int
+		MissingSince  func(childComplexity int) int
+		PiiTags       func(childComplexity int) int
+		ProjectID     func(childComplexity int) int
+		PseudoColumns func(childComplexity int) int
+		Schema        func(childComplexity int) int
+		Table         func(childComplexity int) int
+		TableType     func(childComplexity int) int
+	}
+
 	BigQuerySource struct {
 		Dataset func(childComplexity int) int
 		Table   func(childComplexity int) int
@@ -133,11 +151,43 @@ type ComplexityRoot struct {
 		Slug         func(childComplexity int) int
 	}
 
+	DataproductComplete struct {
+		Created      func(childComplexity int) int
+		Datasets     func(childComplexity int) int
+		Description  func(childComplexity int, raw *bool) int
+		ID           func(childComplexity int) int
+		Keywords     func(childComplexity int) int
+		LastModified func(childComplexity int) int
+		Name         func(childComplexity int) int
+		Owner        func(childComplexity int) int
+		Slug         func(childComplexity int) int
+	}
+
 	Dataset struct {
 		Access                   func(childComplexity int) int
 		AnonymisationDescription func(childComplexity int) int
 		Created                  func(childComplexity int) int
 		Dataproduct              func(childComplexity int) int
+		DataproductID            func(childComplexity int) int
+		Datasource               func(childComplexity int) int
+		Description              func(childComplexity int, raw *bool) int
+		ID                       func(childComplexity int) int
+		Keywords                 func(childComplexity int) int
+		LastModified             func(childComplexity int) int
+		Mappings                 func(childComplexity int) int
+		Name                     func(childComplexity int) int
+		Owner                    func(childComplexity int) int
+		Pii                      func(childComplexity int) int
+		Repo                     func(childComplexity int) int
+		Services                 func(childComplexity int) int
+		Slug                     func(childComplexity int) int
+		TargetUser               func(childComplexity int) int
+	}
+
+	DatasetComplete struct {
+		Access                   func(childComplexity int) int
+		AnonymisationDescription func(childComplexity int) int
+		Created                  func(childComplexity int) int
 		DataproductID            func(childComplexity int) int
 		Datasource               func(childComplexity int) int
 		Description              func(childComplexity int, raw *bool) int
@@ -302,6 +352,7 @@ type ComplexityRoot struct {
 		AccessRequestsForDataset func(childComplexity int, datasetID uuid.UUID) int
 		AccessiblePseudoDatasets func(childComplexity int) int
 		Dataproduct              func(childComplexity int, id uuid.UUID) int
+		DataproductComplete      func(childComplexity int, id uuid.UUID) int
 		Dataproducts             func(childComplexity int, limit *int, offset *int, service *models.MappingService) int
 		Dataset                  func(childComplexity int, id uuid.UUID) int
 		DatasetsInDataproduct    func(childComplexity int, dataproductID uuid.UUID) int
@@ -436,6 +487,9 @@ type DataproductResolver interface {
 	Keywords(ctx context.Context, obj *models.Dataproduct) ([]string, error)
 	Datasets(ctx context.Context, obj *models.Dataproduct) ([]*models.Dataset, error)
 }
+type DataproductCompleteResolver interface {
+	Description(ctx context.Context, obj *models.DataproductComplete, raw *bool) (string, error)
+}
 type DatasetResolver interface {
 	Dataproduct(ctx context.Context, obj *models.Dataset) (*models.Dataproduct, error)
 
@@ -447,6 +501,9 @@ type DatasetResolver interface {
 	Access(ctx context.Context, obj *models.Dataset) ([]*models.Access, error)
 	Services(ctx context.Context, obj *models.Dataset) (*models.DatasetServices, error)
 	Mappings(ctx context.Context, obj *models.Dataset) ([]models.MappingService, error)
+}
+type DatasetCompleteResolver interface {
+	Description(ctx context.Context, obj *models.DatasetComplete, raw *bool) (string, error)
 }
 type InsightProductResolver interface {
 	ProductAreaID(ctx context.Context, obj *models.InsightProduct) (*string, error)
@@ -499,6 +556,7 @@ type QueryResolver interface {
 	Version(ctx context.Context) (string, error)
 	AccessRequest(ctx context.Context, id uuid.UUID) (*models.AccessRequest, error)
 	Dataproduct(ctx context.Context, id uuid.UUID) (*models.Dataproduct, error)
+	DataproductComplete(ctx context.Context, id uuid.UUID) (*models.DataproductComplete, error)
 	Dataproducts(ctx context.Context, limit *int, offset *int, service *models.MappingService) ([]*models.Dataproduct, error)
 	GroupStats(ctx context.Context, limit *int, offset *int) ([]*models.GroupStats, error)
 	Dataset(ctx context.Context, id uuid.UUID) (*models.Dataset, error)
@@ -819,6 +877,97 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.BigQuery.TableType(childComplexity), true
 
+	case "BigQueryComplete.created":
+		if e.complexity.BigQueryComplete.Created == nil {
+			break
+		}
+
+		return e.complexity.BigQueryComplete.Created(childComplexity), true
+
+	case "BigQueryComplete.dataset":
+		if e.complexity.BigQueryComplete.Dataset == nil {
+			break
+		}
+
+		return e.complexity.BigQueryComplete.Dataset(childComplexity), true
+
+	case "BigQueryComplete.description":
+		if e.complexity.BigQueryComplete.Description == nil {
+			break
+		}
+
+		return e.complexity.BigQueryComplete.Description(childComplexity), true
+
+	case "BigQueryComplete.expires":
+		if e.complexity.BigQueryComplete.Expires == nil {
+			break
+		}
+
+		return e.complexity.BigQueryComplete.Expires(childComplexity), true
+
+	case "BigQueryComplete.id":
+		if e.complexity.BigQueryComplete.ID == nil {
+			break
+		}
+
+		return e.complexity.BigQueryComplete.ID(childComplexity), true
+
+	case "BigQueryComplete.lastModified":
+		if e.complexity.BigQueryComplete.LastModified == nil {
+			break
+		}
+
+		return e.complexity.BigQueryComplete.LastModified(childComplexity), true
+
+	case "BigQueryComplete.missingSince":
+		if e.complexity.BigQueryComplete.MissingSince == nil {
+			break
+		}
+
+		return e.complexity.BigQueryComplete.MissingSince(childComplexity), true
+
+	case "BigQueryComplete.piiTags":
+		if e.complexity.BigQueryComplete.PiiTags == nil {
+			break
+		}
+
+		return e.complexity.BigQueryComplete.PiiTags(childComplexity), true
+
+	case "BigQueryComplete.projectID":
+		if e.complexity.BigQueryComplete.ProjectID == nil {
+			break
+		}
+
+		return e.complexity.BigQueryComplete.ProjectID(childComplexity), true
+
+	case "BigQueryComplete.pseudoColumns":
+		if e.complexity.BigQueryComplete.PseudoColumns == nil {
+			break
+		}
+
+		return e.complexity.BigQueryComplete.PseudoColumns(childComplexity), true
+
+	case "BigQueryComplete.schema":
+		if e.complexity.BigQueryComplete.Schema == nil {
+			break
+		}
+
+		return e.complexity.BigQueryComplete.Schema(childComplexity), true
+
+	case "BigQueryComplete.table":
+		if e.complexity.BigQueryComplete.Table == nil {
+			break
+		}
+
+		return e.complexity.BigQueryComplete.Table(childComplexity), true
+
+	case "BigQueryComplete.tableType":
+		if e.complexity.BigQueryComplete.TableType == nil {
+			break
+		}
+
+		return e.complexity.BigQueryComplete.TableType(childComplexity), true
+
 	case "BigQuerySource.dataset":
 		if e.complexity.BigQuerySource.Dataset == nil {
 			break
@@ -928,6 +1077,74 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Dataproduct.Slug(childComplexity), true
+
+	case "DataproductComplete.created":
+		if e.complexity.DataproductComplete.Created == nil {
+			break
+		}
+
+		return e.complexity.DataproductComplete.Created(childComplexity), true
+
+	case "DataproductComplete.datasets":
+		if e.complexity.DataproductComplete.Datasets == nil {
+			break
+		}
+
+		return e.complexity.DataproductComplete.Datasets(childComplexity), true
+
+	case "DataproductComplete.description":
+		if e.complexity.DataproductComplete.Description == nil {
+			break
+		}
+
+		args, err := ec.field_DataproductComplete_description_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.DataproductComplete.Description(childComplexity, args["raw"].(*bool)), true
+
+	case "DataproductComplete.id":
+		if e.complexity.DataproductComplete.ID == nil {
+			break
+		}
+
+		return e.complexity.DataproductComplete.ID(childComplexity), true
+
+	case "DataproductComplete.keywords":
+		if e.complexity.DataproductComplete.Keywords == nil {
+			break
+		}
+
+		return e.complexity.DataproductComplete.Keywords(childComplexity), true
+
+	case "DataproductComplete.lastModified":
+		if e.complexity.DataproductComplete.LastModified == nil {
+			break
+		}
+
+		return e.complexity.DataproductComplete.LastModified(childComplexity), true
+
+	case "DataproductComplete.name":
+		if e.complexity.DataproductComplete.Name == nil {
+			break
+		}
+
+		return e.complexity.DataproductComplete.Name(childComplexity), true
+
+	case "DataproductComplete.owner":
+		if e.complexity.DataproductComplete.Owner == nil {
+			break
+		}
+
+		return e.complexity.DataproductComplete.Owner(childComplexity), true
+
+	case "DataproductComplete.slug":
+		if e.complexity.DataproductComplete.Slug == nil {
+			break
+		}
+
+		return e.complexity.DataproductComplete.Slug(childComplexity), true
 
 	case "Dataset.access":
 		if e.complexity.Dataset.Access == nil {
@@ -1059,6 +1276,130 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Dataset.TargetUser(childComplexity), true
+
+	case "DatasetComplete.access":
+		if e.complexity.DatasetComplete.Access == nil {
+			break
+		}
+
+		return e.complexity.DatasetComplete.Access(childComplexity), true
+
+	case "DatasetComplete.anonymisation_description":
+		if e.complexity.DatasetComplete.AnonymisationDescription == nil {
+			break
+		}
+
+		return e.complexity.DatasetComplete.AnonymisationDescription(childComplexity), true
+
+	case "DatasetComplete.created":
+		if e.complexity.DatasetComplete.Created == nil {
+			break
+		}
+
+		return e.complexity.DatasetComplete.Created(childComplexity), true
+
+	case "DatasetComplete.dataproductID":
+		if e.complexity.DatasetComplete.DataproductID == nil {
+			break
+		}
+
+		return e.complexity.DatasetComplete.DataproductID(childComplexity), true
+
+	case "DatasetComplete.datasource":
+		if e.complexity.DatasetComplete.Datasource == nil {
+			break
+		}
+
+		return e.complexity.DatasetComplete.Datasource(childComplexity), true
+
+	case "DatasetComplete.description":
+		if e.complexity.DatasetComplete.Description == nil {
+			break
+		}
+
+		args, err := ec.field_DatasetComplete_description_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.DatasetComplete.Description(childComplexity, args["raw"].(*bool)), true
+
+	case "DatasetComplete.id":
+		if e.complexity.DatasetComplete.ID == nil {
+			break
+		}
+
+		return e.complexity.DatasetComplete.ID(childComplexity), true
+
+	case "DatasetComplete.keywords":
+		if e.complexity.DatasetComplete.Keywords == nil {
+			break
+		}
+
+		return e.complexity.DatasetComplete.Keywords(childComplexity), true
+
+	case "DatasetComplete.lastModified":
+		if e.complexity.DatasetComplete.LastModified == nil {
+			break
+		}
+
+		return e.complexity.DatasetComplete.LastModified(childComplexity), true
+
+	case "DatasetComplete.mappings":
+		if e.complexity.DatasetComplete.Mappings == nil {
+			break
+		}
+
+		return e.complexity.DatasetComplete.Mappings(childComplexity), true
+
+	case "DatasetComplete.name":
+		if e.complexity.DatasetComplete.Name == nil {
+			break
+		}
+
+		return e.complexity.DatasetComplete.Name(childComplexity), true
+
+	case "DatasetComplete.owner":
+		if e.complexity.DatasetComplete.Owner == nil {
+			break
+		}
+
+		return e.complexity.DatasetComplete.Owner(childComplexity), true
+
+	case "DatasetComplete.pii":
+		if e.complexity.DatasetComplete.Pii == nil {
+			break
+		}
+
+		return e.complexity.DatasetComplete.Pii(childComplexity), true
+
+	case "DatasetComplete.repo":
+		if e.complexity.DatasetComplete.Repo == nil {
+			break
+		}
+
+		return e.complexity.DatasetComplete.Repo(childComplexity), true
+
+	case "DatasetComplete.services":
+		if e.complexity.DatasetComplete.Services == nil {
+			break
+		}
+
+		return e.complexity.DatasetComplete.Services(childComplexity), true
+
+	case "DatasetComplete.slug":
+		if e.complexity.DatasetComplete.Slug == nil {
+			break
+		}
+
+		return e.complexity.DatasetComplete.Slug(childComplexity), true
+
+	case "DatasetComplete.targetUser":
+		if e.complexity.DatasetComplete.TargetUser == nil {
+			break
+		}
+
+		return e.complexity.DatasetComplete.TargetUser(childComplexity), true
 
 	case "DatasetServices.metabase":
 		if e.complexity.DatasetServices.Metabase == nil {
@@ -1897,6 +2238,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Dataproduct(childComplexity, args["id"].(uuid.UUID)), true
+
+	case "Query.dataproductComplete":
+		if e.complexity.Query.DataproductComplete == nil {
+			break
+		}
+
+		args, err := ec.field_Query_dataproductComplete_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.DataproductComplete(childComplexity, args["id"].(uuid.UUID)), true
 
 	case "Query.dataproducts":
 		if e.complexity.Query.Dataproducts == nil {
@@ -2922,6 +3275,30 @@ type Dataproduct @goModel(model: "github.com/navikt/nada-backend/pkg/graph/model
 }
 
 """
+DataproductComplete contains metadata on a datasource.
+"""
+type DataproductComplete @goModel(model: "github.com/navikt/nada-backend/pkg/graph/models.DataproductComplete"){
+    "id is the identifier for the dataproduct"
+    id: ID!
+    "name of the dataproduct"
+    name: String!
+    "description of the dataproduct"
+    description(raw: Boolean): String! @goField(forceResolver: true)
+    "created is the timestamp for when the dataproduct was created"
+    created: Time!
+    "lastModified is the timestamp for when the dataproduct was last modified"
+    lastModified: Time!
+    "slug is the dataproduct slug"
+    slug: String!
+    "owner of the dataproduct. Changes to the dataproduct can only be done by a member of the owner."
+    owner: Owner!
+    "keywords is the keyword tags for the datasets in the dataproduct."
+    keywords: [String!]!
+    "datasets is the list of associated datasets."
+    datasets: [DatasetComplete!]!
+}
+
+"""
 GroupStats contains statistics on a group.
 """
 type GroupStats @goModel(model: "github.com/navikt/nada-backend/pkg/graph/models.GroupStats") {
@@ -2939,6 +3316,14 @@ extend type Query {
         "id of the requested dataproduct."
         id: ID!
     ): Dataproduct!
+
+    """
+    dataproductComplete returns the given dataproduct with complete information.
+    """
+    dataproductComplete(
+        "id of the requested dataproduct."
+        id: ID!
+    ): DataproductComplete!
 
     """
     dataproducts returns a list of dataproducts. Pagination done using the arguments.
@@ -3078,6 +3463,46 @@ type Dataset @goModel(model: "github.com/navikt/nada-backend/pkg/graph/models.Da
     targetUser: String
 }
 
+"""
+DatasetComplete contains metadata on a dataset.
+"""
+type DatasetComplete @goModel(model: "github.com/navikt/nada-backend/pkg/graph/models.DatasetComplete"){
+    "id is the identifier for the dataset"
+    id: ID!
+    "dataproductID is the id of the dataproduct containing the dataset"
+    dataproductID: ID!
+    "name of the dataset"
+    name: String!
+    "description of the dataset"
+    description(raw: Boolean): String! @goField(forceResolver: true)
+    "created is the timestamp for when the dataset was created"
+    created: Time!
+    "lastModified is the timestamp for when the dataset was last modified"
+    lastModified: Time!
+    "repo is the url of the repository containing the code to create the dataset"
+    repo: String
+    "pii indicates whether it is personal identifiable information in the dataset"
+    pii: PiiLevel!
+    "keywords for the dataset used as tags."
+    keywords: [String!]!
+    "owner is the owner of the dataproduct containing this dataset"
+    owner: Owner!
+    "slug is the dataset slug"
+    slug: String!
+    "datasource contains metadata on the datasource"
+    datasource: Datasource!
+    "access contains list of users, groups and service accounts which have access to the dataset"
+    access: [Access!]!
+    "services contains links to this dataset in other services"
+    services: DatasetServices!
+    "mappings services a dataset is exposed to"
+    mappings: [MappingService!]!
+    "anonymisation_description explains how the dataset was anonymised, should be null if ` + "`" + `pii` + "`" + ` isn't anonymised"
+    anonymisation_description: String
+    "targetUser is the type of user that the dataset is meant to be used by"
+    targetUser: String
+}
+
 type DatasetServices @goModel(model: "github.com/navikt/nada-backend/pkg/graph/models.DatasetServices") {
     "URL to the dataset in metabase"
     metabase: String
@@ -3132,6 +3557,39 @@ type BigQuery @goModel(model: "github.com/navikt/nada-backend/pkg/graph/models.B
 }
 
 """
+BigQueryComplete contains metadata on a BigQuery table.
+"""
+type BigQueryComplete @goModel(model: "github.com/navikt/nada-backend/pkg/graph/models.BigQueryComplete") {
+    "id is the identifier for the datasource"
+    id: ID!
+    "projectID is the GCP project ID that contains the BigQuery table"
+    projectID: String!
+    "dataset is the dataset that contains the BigQuery table"
+    dataset: String!
+    "table name for BigQuery table"
+    table: String!
+    "schema for the BigQuery table"
+    schema: [TableColumn!]!
+    "lastModified is the time when the table was last modified"
+    lastModified: Time!
+    "created is when the table was created"
+    created: Time!
+    "expires, if set, is when the table expires"
+    expires: Time
+    "tableType is what type the table is"
+    tableType: BigQueryType!
+    "description is the description of the BigQuery table"
+    description: String!
+    "piiTags is json string from the pii tags map"
+    piiTags: String
+    "missingSince, if set, is the time when the table got deleted from BigQuery"
+    missingSince: Time
+    "pseudoColumns, if set, the columns are pseudonymised"
+    pseudoColumns: [String!]
+
+}
+
+"""
 PseudoDataset contains information about a pseudo dataset
 """
 type PseudoDataset @goModel(model: "github.com/navikt/nada-backend/pkg/graph/models.PseudoDataset") {
@@ -3146,7 +3604,7 @@ type PseudoDataset @goModel(model: "github.com/navikt/nada-backend/pkg/graph/mod
 """
 Datasource defines types that can be returned as a dataset datasource.
 """
-union Datasource @goModel(model: "github.com/navikt/nada-backend/pkg/graph/models.Datasource") = BigQuery
+union Datasource @goModel(model: "github.com/navikt/nada-backend/pkg/graph/models.Datasource") = BigQuery | BigQueryComplete
 
 extend type Query {
     """
@@ -4305,7 +4763,37 @@ func (ec *executionContext) dir_authenticated_args(ctx context.Context, rawArgs 
 	return args, nil
 }
 
+func (ec *executionContext) field_DataproductComplete_description_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *bool
+	if tmp, ok := rawArgs["raw"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("raw"))
+		arg0, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["raw"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Dataproduct_description_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *bool
+	if tmp, ok := rawArgs["raw"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("raw"))
+		arg0, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["raw"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_DatasetComplete_description_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *bool
@@ -5016,6 +5504,21 @@ func (ec *executionContext) field_Query_accessRequestsForDataset_args(ctx contex
 		}
 	}
 	args["datasetID"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_dataproductComplete_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -7058,6 +7561,576 @@ func (ec *executionContext) fieldContext_BigQuery_pseudoColumns(ctx context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _BigQueryComplete_id(ctx context.Context, field graphql.CollectedField, obj *models.BigQueryComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BigQueryComplete_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(uuid.UUID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BigQueryComplete_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BigQueryComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BigQueryComplete_projectID(ctx context.Context, field graphql.CollectedField, obj *models.BigQueryComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BigQueryComplete_projectID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ProjectID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BigQueryComplete_projectID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BigQueryComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BigQueryComplete_dataset(ctx context.Context, field graphql.CollectedField, obj *models.BigQueryComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BigQueryComplete_dataset(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Dataset, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BigQueryComplete_dataset(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BigQueryComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BigQueryComplete_table(ctx context.Context, field graphql.CollectedField, obj *models.BigQueryComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BigQueryComplete_table(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Table, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BigQueryComplete_table(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BigQueryComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BigQueryComplete_schema(ctx context.Context, field graphql.CollectedField, obj *models.BigQueryComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BigQueryComplete_schema(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Schema, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*models.TableColumn)
+	fc.Result = res
+	return ec.marshalNTableColumn2ᚕᚖgithubᚗcomᚋnaviktᚋnadaᚑbackendᚋpkgᚋgraphᚋmodelsᚐTableColumnᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BigQueryComplete_schema(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BigQueryComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_TableColumn_name(ctx, field)
+			case "description":
+				return ec.fieldContext_TableColumn_description(ctx, field)
+			case "mode":
+				return ec.fieldContext_TableColumn_mode(ctx, field)
+			case "type":
+				return ec.fieldContext_TableColumn_type(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TableColumn", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BigQueryComplete_lastModified(ctx context.Context, field graphql.CollectedField, obj *models.BigQueryComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BigQueryComplete_lastModified(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastModified, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BigQueryComplete_lastModified(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BigQueryComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BigQueryComplete_created(ctx context.Context, field graphql.CollectedField, obj *models.BigQueryComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BigQueryComplete_created(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Created, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BigQueryComplete_created(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BigQueryComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BigQueryComplete_expires(ctx context.Context, field graphql.CollectedField, obj *models.BigQueryComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BigQueryComplete_expires(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Expires, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BigQueryComplete_expires(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BigQueryComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BigQueryComplete_tableType(ctx context.Context, field graphql.CollectedField, obj *models.BigQueryComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BigQueryComplete_tableType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TableType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(models.BigQueryType)
+	fc.Result = res
+	return ec.marshalNBigQueryType2githubᚗcomᚋnaviktᚋnadaᚑbackendᚋpkgᚋgraphᚋmodelsᚐBigQueryType(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BigQueryComplete_tableType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BigQueryComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type BigQueryType does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BigQueryComplete_description(ctx context.Context, field graphql.CollectedField, obj *models.BigQueryComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BigQueryComplete_description(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Description, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BigQueryComplete_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BigQueryComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BigQueryComplete_piiTags(ctx context.Context, field graphql.CollectedField, obj *models.BigQueryComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BigQueryComplete_piiTags(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PiiTags, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BigQueryComplete_piiTags(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BigQueryComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BigQueryComplete_missingSince(ctx context.Context, field graphql.CollectedField, obj *models.BigQueryComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BigQueryComplete_missingSince(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MissingSince, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BigQueryComplete_missingSince(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BigQueryComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BigQueryComplete_pseudoColumns(ctx context.Context, field graphql.CollectedField, obj *models.BigQueryComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BigQueryComplete_pseudoColumns(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PseudoColumns, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BigQueryComplete_pseudoColumns(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BigQueryComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _BigQuerySource_table(ctx context.Context, field graphql.CollectedField, obj *models.BigQuerySource) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_BigQuerySource_table(ctx, field)
 	if err != nil {
@@ -7774,6 +8847,461 @@ func (ec *executionContext) fieldContext_Dataproduct_datasets(ctx context.Contex
 				return ec.fieldContext_Dataset_targetUser(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Dataset", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DataproductComplete_id(ctx context.Context, field graphql.CollectedField, obj *models.DataproductComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DataproductComplete_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(uuid.UUID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DataproductComplete_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataproductComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DataproductComplete_name(ctx context.Context, field graphql.CollectedField, obj *models.DataproductComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DataproductComplete_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DataproductComplete_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataproductComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DataproductComplete_description(ctx context.Context, field graphql.CollectedField, obj *models.DataproductComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DataproductComplete_description(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.DataproductComplete().Description(rctx, obj, fc.Args["raw"].(*bool))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DataproductComplete_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataproductComplete",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_DataproductComplete_description_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DataproductComplete_created(ctx context.Context, field graphql.CollectedField, obj *models.DataproductComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DataproductComplete_created(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Created, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DataproductComplete_created(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataproductComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DataproductComplete_lastModified(ctx context.Context, field graphql.CollectedField, obj *models.DataproductComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DataproductComplete_lastModified(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastModified, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DataproductComplete_lastModified(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataproductComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DataproductComplete_slug(ctx context.Context, field graphql.CollectedField, obj *models.DataproductComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DataproductComplete_slug(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Slug, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DataproductComplete_slug(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataproductComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DataproductComplete_owner(ctx context.Context, field graphql.CollectedField, obj *models.DataproductComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DataproductComplete_owner(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Owner, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Owner)
+	fc.Result = res
+	return ec.marshalNOwner2ᚖgithubᚗcomᚋnaviktᚋnadaᚑbackendᚋpkgᚋgraphᚋmodelsᚐOwner(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DataproductComplete_owner(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataproductComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "group":
+				return ec.fieldContext_Owner_group(ctx, field)
+			case "teamkatalogenURL":
+				return ec.fieldContext_Owner_teamkatalogenURL(ctx, field)
+			case "teamContact":
+				return ec.fieldContext_Owner_teamContact(ctx, field)
+			case "productAreaID":
+				return ec.fieldContext_Owner_productAreaID(ctx, field)
+			case "teamID":
+				return ec.fieldContext_Owner_teamID(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Owner", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DataproductComplete_keywords(ctx context.Context, field graphql.CollectedField, obj *models.DataproductComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DataproductComplete_keywords(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Keywords, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DataproductComplete_keywords(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataproductComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DataproductComplete_datasets(ctx context.Context, field graphql.CollectedField, obj *models.DataproductComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DataproductComplete_datasets(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Datasets, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*models.DatasetComplete)
+	fc.Result = res
+	return ec.marshalNDatasetComplete2ᚕᚖgithubᚗcomᚋnaviktᚋnadaᚑbackendᚋpkgᚋgraphᚋmodelsᚐDatasetCompleteᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DataproductComplete_datasets(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataproductComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_DatasetComplete_id(ctx, field)
+			case "dataproductID":
+				return ec.fieldContext_DatasetComplete_dataproductID(ctx, field)
+			case "name":
+				return ec.fieldContext_DatasetComplete_name(ctx, field)
+			case "description":
+				return ec.fieldContext_DatasetComplete_description(ctx, field)
+			case "created":
+				return ec.fieldContext_DatasetComplete_created(ctx, field)
+			case "lastModified":
+				return ec.fieldContext_DatasetComplete_lastModified(ctx, field)
+			case "repo":
+				return ec.fieldContext_DatasetComplete_repo(ctx, field)
+			case "pii":
+				return ec.fieldContext_DatasetComplete_pii(ctx, field)
+			case "keywords":
+				return ec.fieldContext_DatasetComplete_keywords(ctx, field)
+			case "owner":
+				return ec.fieldContext_DatasetComplete_owner(ctx, field)
+			case "slug":
+				return ec.fieldContext_DatasetComplete_slug(ctx, field)
+			case "datasource":
+				return ec.fieldContext_DatasetComplete_datasource(ctx, field)
+			case "access":
+				return ec.fieldContext_DatasetComplete_access(ctx, field)
+			case "services":
+				return ec.fieldContext_DatasetComplete_services(ctx, field)
+			case "mappings":
+				return ec.fieldContext_DatasetComplete_mappings(ctx, field)
+			case "anonymisation_description":
+				return ec.fieldContext_DatasetComplete_anonymisation_description(ctx, field)
+			case "targetUser":
+				return ec.fieldContext_DatasetComplete_targetUser(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DatasetComplete", field.Name)
 		},
 	}
 	return fc, nil
@@ -8617,6 +10145,790 @@ func (ec *executionContext) _Dataset_targetUser(ctx context.Context, field graph
 func (ec *executionContext) fieldContext_Dataset_targetUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Dataset",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DatasetComplete_id(ctx context.Context, field graphql.CollectedField, obj *models.DatasetComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DatasetComplete_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(uuid.UUID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DatasetComplete_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DatasetComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DatasetComplete_dataproductID(ctx context.Context, field graphql.CollectedField, obj *models.DatasetComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DatasetComplete_dataproductID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DataproductID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(uuid.UUID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DatasetComplete_dataproductID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DatasetComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DatasetComplete_name(ctx context.Context, field graphql.CollectedField, obj *models.DatasetComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DatasetComplete_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DatasetComplete_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DatasetComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DatasetComplete_description(ctx context.Context, field graphql.CollectedField, obj *models.DatasetComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DatasetComplete_description(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.DatasetComplete().Description(rctx, obj, fc.Args["raw"].(*bool))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DatasetComplete_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DatasetComplete",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_DatasetComplete_description_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DatasetComplete_created(ctx context.Context, field graphql.CollectedField, obj *models.DatasetComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DatasetComplete_created(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Created, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DatasetComplete_created(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DatasetComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DatasetComplete_lastModified(ctx context.Context, field graphql.CollectedField, obj *models.DatasetComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DatasetComplete_lastModified(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastModified, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DatasetComplete_lastModified(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DatasetComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DatasetComplete_repo(ctx context.Context, field graphql.CollectedField, obj *models.DatasetComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DatasetComplete_repo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Repo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DatasetComplete_repo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DatasetComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DatasetComplete_pii(ctx context.Context, field graphql.CollectedField, obj *models.DatasetComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DatasetComplete_pii(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Pii, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(models.PiiLevel)
+	fc.Result = res
+	return ec.marshalNPiiLevel2githubᚗcomᚋnaviktᚋnadaᚑbackendᚋpkgᚋgraphᚋmodelsᚐPiiLevel(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DatasetComplete_pii(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DatasetComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type PiiLevel does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DatasetComplete_keywords(ctx context.Context, field graphql.CollectedField, obj *models.DatasetComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DatasetComplete_keywords(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Keywords, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DatasetComplete_keywords(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DatasetComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DatasetComplete_owner(ctx context.Context, field graphql.CollectedField, obj *models.DatasetComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DatasetComplete_owner(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Owner, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Owner)
+	fc.Result = res
+	return ec.marshalNOwner2ᚖgithubᚗcomᚋnaviktᚋnadaᚑbackendᚋpkgᚋgraphᚋmodelsᚐOwner(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DatasetComplete_owner(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DatasetComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "group":
+				return ec.fieldContext_Owner_group(ctx, field)
+			case "teamkatalogenURL":
+				return ec.fieldContext_Owner_teamkatalogenURL(ctx, field)
+			case "teamContact":
+				return ec.fieldContext_Owner_teamContact(ctx, field)
+			case "productAreaID":
+				return ec.fieldContext_Owner_productAreaID(ctx, field)
+			case "teamID":
+				return ec.fieldContext_Owner_teamID(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Owner", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DatasetComplete_slug(ctx context.Context, field graphql.CollectedField, obj *models.DatasetComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DatasetComplete_slug(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Slug, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DatasetComplete_slug(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DatasetComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DatasetComplete_datasource(ctx context.Context, field graphql.CollectedField, obj *models.DatasetComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DatasetComplete_datasource(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Datasource, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(models.Datasource)
+	fc.Result = res
+	return ec.marshalNDatasource2githubᚗcomᚋnaviktᚋnadaᚑbackendᚋpkgᚋgraphᚋmodelsᚐDatasource(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DatasetComplete_datasource(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DatasetComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datasource does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DatasetComplete_access(ctx context.Context, field graphql.CollectedField, obj *models.DatasetComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DatasetComplete_access(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Access, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*models.Access)
+	fc.Result = res
+	return ec.marshalNAccess2ᚕᚖgithubᚗcomᚋnaviktᚋnadaᚑbackendᚋpkgᚋgraphᚋmodelsᚐAccessᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DatasetComplete_access(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DatasetComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Access_id(ctx, field)
+			case "subject":
+				return ec.fieldContext_Access_subject(ctx, field)
+			case "granter":
+				return ec.fieldContext_Access_granter(ctx, field)
+			case "expires":
+				return ec.fieldContext_Access_expires(ctx, field)
+			case "created":
+				return ec.fieldContext_Access_created(ctx, field)
+			case "revoked":
+				return ec.fieldContext_Access_revoked(ctx, field)
+			case "accessRequestID":
+				return ec.fieldContext_Access_accessRequestID(ctx, field)
+			case "accessRequest":
+				return ec.fieldContext_Access_accessRequest(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Access", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DatasetComplete_services(ctx context.Context, field graphql.CollectedField, obj *models.DatasetComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DatasetComplete_services(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Services, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.DatasetServices)
+	fc.Result = res
+	return ec.marshalNDatasetServices2ᚖgithubᚗcomᚋnaviktᚋnadaᚑbackendᚋpkgᚋgraphᚋmodelsᚐDatasetServices(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DatasetComplete_services(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DatasetComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "metabase":
+				return ec.fieldContext_DatasetServices_metabase(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DatasetServices", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DatasetComplete_mappings(ctx context.Context, field graphql.CollectedField, obj *models.DatasetComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DatasetComplete_mappings(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Mappings, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]models.MappingService)
+	fc.Result = res
+	return ec.marshalNMappingService2ᚕgithubᚗcomᚋnaviktᚋnadaᚑbackendᚋpkgᚋgraphᚋmodelsᚐMappingServiceᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DatasetComplete_mappings(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DatasetComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type MappingService does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DatasetComplete_anonymisation_description(ctx context.Context, field graphql.CollectedField, obj *models.DatasetComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DatasetComplete_anonymisation_description(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AnonymisationDescription, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DatasetComplete_anonymisation_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DatasetComplete",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DatasetComplete_targetUser(ctx context.Context, field graphql.CollectedField, obj *models.DatasetComplete) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DatasetComplete_targetUser(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TargetUser, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DatasetComplete_targetUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DatasetComplete",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -14201,6 +16513,81 @@ func (ec *executionContext) fieldContext_Query_dataproduct(ctx context.Context, 
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_dataproduct_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_dataproductComplete(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_dataproductComplete(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().DataproductComplete(rctx, fc.Args["id"].(uuid.UUID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.DataproductComplete)
+	fc.Result = res
+	return ec.marshalNDataproductComplete2ᚖgithubᚗcomᚋnaviktᚋnadaᚑbackendᚋpkgᚋgraphᚋmodelsᚐDataproductComplete(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_dataproductComplete(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_DataproductComplete_id(ctx, field)
+			case "name":
+				return ec.fieldContext_DataproductComplete_name(ctx, field)
+			case "description":
+				return ec.fieldContext_DataproductComplete_description(ctx, field)
+			case "created":
+				return ec.fieldContext_DataproductComplete_created(ctx, field)
+			case "lastModified":
+				return ec.fieldContext_DataproductComplete_lastModified(ctx, field)
+			case "slug":
+				return ec.fieldContext_DataproductComplete_slug(ctx, field)
+			case "owner":
+				return ec.fieldContext_DataproductComplete_owner(ctx, field)
+			case "keywords":
+				return ec.fieldContext_DataproductComplete_keywords(ctx, field)
+			case "datasets":
+				return ec.fieldContext_DataproductComplete_datasets(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DataproductComplete", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_dataproductComplete_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -21963,6 +24350,13 @@ func (ec *executionContext) _Datasource(ctx context.Context, sel ast.SelectionSe
 			return graphql.Null
 		}
 		return ec._BigQuery(ctx, sel, obj)
+	case models.BigQueryComplete:
+		return ec._BigQueryComplete(ctx, sel, &obj)
+	case *models.BigQueryComplete:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BigQueryComplete(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -22373,6 +24767,93 @@ func (ec *executionContext) _BigQuery(ctx context.Context, sel ast.SelectionSet,
 	return out
 }
 
+var bigQueryCompleteImplementors = []string{"BigQueryComplete", "Datasource"}
+
+func (ec *executionContext) _BigQueryComplete(ctx context.Context, sel ast.SelectionSet, obj *models.BigQueryComplete) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bigQueryCompleteImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("BigQueryComplete")
+		case "id":
+			out.Values[i] = ec._BigQueryComplete_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "projectID":
+			out.Values[i] = ec._BigQueryComplete_projectID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "dataset":
+			out.Values[i] = ec._BigQueryComplete_dataset(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "table":
+			out.Values[i] = ec._BigQueryComplete_table(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "schema":
+			out.Values[i] = ec._BigQueryComplete_schema(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "lastModified":
+			out.Values[i] = ec._BigQueryComplete_lastModified(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "created":
+			out.Values[i] = ec._BigQueryComplete_created(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "expires":
+			out.Values[i] = ec._BigQueryComplete_expires(ctx, field, obj)
+		case "tableType":
+			out.Values[i] = ec._BigQueryComplete_tableType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "description":
+			out.Values[i] = ec._BigQueryComplete_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "piiTags":
+			out.Values[i] = ec._BigQueryComplete_piiTags(ctx, field, obj)
+		case "missingSince":
+			out.Values[i] = ec._BigQueryComplete_missingSince(ctx, field, obj)
+		case "pseudoColumns":
+			out.Values[i] = ec._BigQueryComplete_pseudoColumns(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var bigQuerySourceImplementors = []string{"BigQuerySource"}
 
 func (ec *executionContext) _BigQuerySource(ctx context.Context, sel ast.SelectionSet, obj *models.BigQuerySource) graphql.Marshaler {
@@ -22620,6 +25101,116 @@ func (ec *executionContext) _Dataproduct(ctx context.Context, sel ast.SelectionS
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var dataproductCompleteImplementors = []string{"DataproductComplete"}
+
+func (ec *executionContext) _DataproductComplete(ctx context.Context, sel ast.SelectionSet, obj *models.DataproductComplete) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dataproductCompleteImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DataproductComplete")
+		case "id":
+			out.Values[i] = ec._DataproductComplete_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "name":
+			out.Values[i] = ec._DataproductComplete_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "description":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._DataproductComplete_description(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "created":
+			out.Values[i] = ec._DataproductComplete_created(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "lastModified":
+			out.Values[i] = ec._DataproductComplete_lastModified(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "slug":
+			out.Values[i] = ec._DataproductComplete_slug(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "owner":
+			out.Values[i] = ec._DataproductComplete_owner(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "keywords":
+			out.Values[i] = ec._DataproductComplete_keywords(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "datasets":
+			out.Values[i] = ec._DataproductComplete_datasets(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -22952,6 +25543,147 @@ func (ec *executionContext) _Dataset(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = ec._Dataset_anonymisation_description(ctx, field, obj)
 		case "targetUser":
 			out.Values[i] = ec._Dataset_targetUser(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var datasetCompleteImplementors = []string{"DatasetComplete"}
+
+func (ec *executionContext) _DatasetComplete(ctx context.Context, sel ast.SelectionSet, obj *models.DatasetComplete) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, datasetCompleteImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DatasetComplete")
+		case "id":
+			out.Values[i] = ec._DatasetComplete_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "dataproductID":
+			out.Values[i] = ec._DatasetComplete_dataproductID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "name":
+			out.Values[i] = ec._DatasetComplete_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "description":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._DatasetComplete_description(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "created":
+			out.Values[i] = ec._DatasetComplete_created(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "lastModified":
+			out.Values[i] = ec._DatasetComplete_lastModified(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "repo":
+			out.Values[i] = ec._DatasetComplete_repo(ctx, field, obj)
+		case "pii":
+			out.Values[i] = ec._DatasetComplete_pii(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "keywords":
+			out.Values[i] = ec._DatasetComplete_keywords(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "owner":
+			out.Values[i] = ec._DatasetComplete_owner(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "slug":
+			out.Values[i] = ec._DatasetComplete_slug(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "datasource":
+			out.Values[i] = ec._DatasetComplete_datasource(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "access":
+			out.Values[i] = ec._DatasetComplete_access(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "services":
+			out.Values[i] = ec._DatasetComplete_services(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "mappings":
+			out.Values[i] = ec._DatasetComplete_mappings(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "anonymisation_description":
+			out.Values[i] = ec._DatasetComplete_anonymisation_description(ctx, field, obj)
+		case "targetUser":
+			out.Values[i] = ec._DatasetComplete_targetUser(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -24360,6 +27092,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_dataproduct(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "dataproductComplete":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_dataproductComplete(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -26893,6 +29647,20 @@ func (ec *executionContext) marshalNDataproduct2ᚖgithubᚗcomᚋnaviktᚋnada�
 	return ec._Dataproduct(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNDataproductComplete2githubᚗcomᚋnaviktᚋnadaᚑbackendᚋpkgᚋgraphᚋmodelsᚐDataproductComplete(ctx context.Context, sel ast.SelectionSet, v models.DataproductComplete) graphql.Marshaler {
+	return ec._DataproductComplete(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDataproductComplete2ᚖgithubᚗcomᚋnaviktᚋnadaᚑbackendᚋpkgᚋgraphᚋmodelsᚐDataproductComplete(ctx context.Context, sel ast.SelectionSet, v *models.DataproductComplete) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DataproductComplete(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNDataset2githubᚗcomᚋnaviktᚋnadaᚑbackendᚋpkgᚋgraphᚋmodelsᚐDataset(ctx context.Context, sel ast.SelectionSet, v models.Dataset) graphql.Marshaler {
 	return ec._Dataset(ctx, sel, &v)
 }
@@ -26949,6 +29717,60 @@ func (ec *executionContext) marshalNDataset2ᚖgithubᚗcomᚋnaviktᚋnadaᚑba
 		return graphql.Null
 	}
 	return ec._Dataset(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDatasetComplete2ᚕᚖgithubᚗcomᚋnaviktᚋnadaᚑbackendᚋpkgᚋgraphᚋmodelsᚐDatasetCompleteᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.DatasetComplete) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNDatasetComplete2ᚖgithubᚗcomᚋnaviktᚋnadaᚑbackendᚋpkgᚋgraphᚋmodelsᚐDatasetComplete(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDatasetComplete2ᚖgithubᚗcomᚋnaviktᚋnadaᚑbackendᚋpkgᚋgraphᚋmodelsᚐDatasetComplete(ctx context.Context, sel ast.SelectionSet, v *models.DatasetComplete) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DatasetComplete(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNDatasetServices2githubᚗcomᚋnaviktᚋnadaᚑbackendᚋpkgᚋgraphᚋmodelsᚐDatasetServices(ctx context.Context, sel ast.SelectionSet, v models.DatasetServices) graphql.Marshaler {

@@ -62,7 +62,7 @@ func New(dbConnDSN string, maxIdleConn, maxOpenConn int, eventMgr *event.Manager
 	}
 
 	return &Repo{
-		querier:            gensql.New(db),
+		querier:            gensql.NewWithLog(db),
 		db:                 db,
 		log:                log,
 		events:             eventMgr,

@@ -87,3 +87,53 @@ FROM "dataproducts"
 GROUP BY "group"
 ORDER BY "count" DESC
 LIMIT @lim OFFSET @offs;
+
+-- name: GetDataproductComplete :many
+SELECT 
+dsrc.id AS dsrc_id,  
+dsrc.created as dsrc_created,
+dsrc.last_modified as dsrc_last_modified,
+dsrc.expires as dsrc_expires,
+dsrc.description as dsrc_description,
+dsrc.missing_since as dsrc_missing_since,
+dsrc.pii_tags as pii_tags,
+dsrc.project_id as project_id,
+dsrc.dataset as dataset,
+dsrc.table_name as table_name,
+dsrc.table_type as table_type,
+dsrc.pseudo_columns as pseudo_columns,
+dsrc.dataset_id as dsrc_dataset_id,
+dsrc.schema as dsrc_schema,
+dpds.*,
+dm.services,
+da.id as da_id,
+da.subject as da_subject,
+da.granter as da_granter,
+da.expires as da_expires,
+da.created as da_created,
+da.revoked as da_revoked,
+da.access_request_id as access_request_id,
+mm.database_id as mm_database_id
+FROM 
+(
+	SELECT 
+    ds.id AS ds_id, 
+    ds.name as ds_name, 
+    ds.description as ds_description,
+    ds.created as ds_created,
+    ds.last_modified as ds_last_modified,
+    ds.slug as ds_slug,
+    ds.keywords as keywords,
+    rdp.* 
+    FROM 
+	(
+		(SELECT * FROM dataproducts dp WHERE dp.id= @id) rdp 
+		LEFT JOIN datasets ds ON ds.dataproduct_id = rdp.id
+	)
+) dpds 
+LEFT JOIN 
+    (SELECT * FROM datasource_bigquery WHERE is_reference = false) dsrc
+ON dpds.ds_id = dsrc.dataset_id 
+LEFT JOIN third_party_mappings dm ON dpds.ds_id = dm.dataset_id
+LEFT JOIN dataset_access da ON dpds.ds_id = da.dataset_id
+LEFT JOIN metabase_metadata mm ON mm.dataset_id = dpds.ds_id AND mm.deleted_at IS NULL;

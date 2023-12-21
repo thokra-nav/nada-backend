@@ -240,6 +240,7 @@ func (r *Repo) UpdateDataset(ctx context.Context, id uuid.UUID, new models.Updat
 }
 
 func (r *Repo) GetBigqueryDatasource(ctx context.Context, datasetID uuid.UUID, isReference bool) (models.BigQuery, error) {
+	fmt.Println("database getbigquerydatasource")
 	bq, err := r.querier.GetBigqueryDatasource(ctx, gensql.GetBigqueryDatasourceParams{
 		DatasetID:   datasetID,
 		IsReference: isReference,
@@ -296,6 +297,7 @@ func (r *Repo) UpdateBigqueryDatasourceMissing(ctx context.Context, datasetID uu
 }
 
 func (r *Repo) GetDatasetMetadata(ctx context.Context, id uuid.UUID) ([]*models.TableColumn, error) {
+	fmt.Println("database getdatasetmetadata")
 	ds, err := r.querier.GetBigqueryDatasource(ctx, gensql.GetBigqueryDatasourceParams{
 		DatasetID:   id,
 		IsReference: false,
@@ -315,6 +317,7 @@ func (r *Repo) GetDatasetMetadata(ctx context.Context, id uuid.UUID) ([]*models.
 }
 
 func (r *Repo) GetDatasetPiiTags(ctx context.Context, id uuid.UUID) (map[string]string, error) {
+	fmt.Println("database getdatasetpiitags")
 	ds, err := r.querier.GetBigqueryDatasource(ctx, gensql.GetBigqueryDatasourceParams{
 		DatasetID:   id,
 		IsReference: false,
