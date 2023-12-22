@@ -2,6 +2,10 @@ module github.com/navikt/nada-backend
 
 go 1.21
 
+replace sourcegraph.com/sourcegraph/appdash => github.com/sourcegraph/appdash v0.0.0-20211028080628-e2786a622600
+
+replace sourcegraph.com/sourcegraph/appdash-data => github.com/sourcegraph/appdash-data v0.0.0-20151005221446-73f23eafcf67
+
 require (
 	cloud.google.com/go/bigquery v1.57.1
 	cloud.google.com/go/iam v1.1.5
@@ -9,7 +13,7 @@ require (
 	github.com/99designs/gqlgen v0.17.41
 	github.com/99designs/gqlgen-contrib v0.1.1-0.20200601100547-7a955d321bbd
 	github.com/btcsuite/btcutil v1.0.2
-	github.com/coreos/go-oidc/v3 v3.8.0
+	github.com/coreos/go-oidc/v3 v3.9.0
 	github.com/go-chi/chi v4.1.2+incompatible
 	github.com/go-chi/cors v1.2.1
 	github.com/golang-jwt/jwt/v4 v4.5.0
@@ -97,7 +101,7 @@ require (
 	go.opentelemetry.io/otel/metric v1.21.0 // indirect
 	go.opentelemetry.io/otel/trace v1.21.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.16.0 // indirect
+	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/net v0.19.0 // indirect
 	golang.org/x/sync v0.5.0 // indirect
