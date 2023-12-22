@@ -7,13 +7,20 @@ import (
 )
 
 type Dataproduct struct {
-	ID           uuid.UUID `json:"id"`
-	Name         string    `json:"name"`
-	Created      time.Time `json:"created"`
-	LastModified time.Time `json:"lastModified"`
-	Description  *string   `json:"description"`
-	Slug         string    `json:"slug"`
-	Owner        *Owner    `json:"owner"`
+	ID           uuid.UUID  `json:"id"`
+	Name         string     `json:"name"`
+	Created      time.Time  `json:"created"`
+	LastModified time.Time  `json:"lastModified"`
+	Description  *string    `json:"description"`
+	Slug         string     `json:"slug"`
+	Owner        *Owner     `json:"owner"`
+	Datasets     []*Dataset `json:"datasets"`
+	Keywords     []string   `json:"keywords"`
+}
+
+type DataproductUpdate struct {
+	ID   uuid.UUID `json:"id"`
+	Slug string    `json:"slug"`
 }
 
 func (Dataproduct) IsSearchResult() {}

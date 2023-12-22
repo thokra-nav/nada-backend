@@ -63,7 +63,7 @@ func (r *Repo) Search(ctx context.Context, query *models.SearchQuery) ([]*models
 		excerpts[sr.ElementID] = sr.Excerpt
 	}
 
-	dps, err := r.querier.GetDataproductsByIDs(ctx, dataproducts)
+	dps, err := r.querier.GetMinimalDataproductsByIDs(ctx, dataproducts)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (r *Repo) Search(ctx context.Context, query *models.SearchQuery) ([]*models
 	for _, d := range dps {
 		ret = append(ret, &models.SearchResultRow{
 			Excerpt: excerpts[d.ID],
-			Result:  dataproductFromSQL(d),
+			Result:  minimalDataproductFromSQL(d),
 		})
 	}
 	for _, s := range ss {

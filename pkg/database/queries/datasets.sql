@@ -1,48 +1,10 @@
--- name: GetDataset :one
-SELECT
-  *
-FROM
-  datasets
-WHERE
-  id = @id;
-
--- name: GetDatasets :many
-SELECT
-  *
-FROM
-  datasets
-ORDER BY
-  last_modified DESC
-LIMIT
-  sqlc.arg('limit') OFFSET sqlc.arg('offset');
-
--- name: GetDatasetsByIDs :many
-SELECT
-  *
-FROM
-  datasets
-WHERE
-  id = ANY (@ids :: uuid [])
-ORDER BY
-  last_modified DESC;
-
--- name: GetDatasetsByGroups :many
-SELECT
-  *
-FROM
-  datasets
-WHERE
-  "group" = ANY (@groups :: text [])
-ORDER BY
-  last_modified DESC;
-
 -- name: GetDatasetsByUserAccess :many
 SELECT
   *
 FROM
-  datasets
+  dataproduct_complete_view
 WHERE
-  id = ANY (
+  ds_id = ANY (
     SELECT
       dataset_id
     FROM
@@ -56,15 +18,7 @@ WHERE
       )
   )
 ORDER BY
-  last_modified DESC;
-
--- name: GetDatasetsInDataproduct :many
-SELECT
-  *
-FROM
-  datasets
-WHERE
-  dataproduct_id = @dataproduct_id;
+  ds_last_modified DESC;
 
 -- name: DeleteDataset :exec
 DELETE FROM
@@ -196,25 +150,6 @@ SET
 WHERE
   dataset_id = @dataset_id;
 
--- name: DatasetsByMetabase :many
-SELECT
-  *
-FROM
-  datasets
-WHERE
-  id IN (
-    SELECT
-      dataset_id
-    FROM
-      metabase_metadata
-    WHERE
-      "deleted_at" IS NULL
-  )
-ORDER BY
-  last_modified DESC
-LIMIT
-  @lim OFFSET @offs;
-
 -- name: ReplaceDatasetsTag :exec
 UPDATE
   datasets
@@ -290,9 +225,9 @@ WHERE
 
 -- name: GetDatasetsForOwner :many
 SELECT
-  ds.*
+  *
 FROM
-  datasets ds
+  dataproduct_complete_view
 WHERE
   dataproduct_id IN (
     SELECT
@@ -321,3 +256,11 @@ SET
   deleted = NOW()
 WHERE
   id = @id;
+
+-- name: GetDataset :many
+SELECT
+  *
+FROM
+  dataproduct_complete_view
+WHERE
+  ds_id = @id;

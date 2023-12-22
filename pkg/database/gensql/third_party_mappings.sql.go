@@ -26,9 +26,8 @@ func (q *Queries) GetDatasetMappings(ctx context.Context, datasetID uuid.UUID) (
 }
 
 const getDatasetsByMapping = `-- name: GetDatasetsByMapping :many
-SELECT datasets.id, datasets.name, datasets.description, datasets.pii, datasets.created, datasets.last_modified, datasets.type, datasets.tsv_document, datasets.slug, datasets.repo, datasets.keywords, datasets.dataproduct_id, datasets.anonymisation_description, datasets.target_user FROM third_party_mappings
-INNER JOIN datasets ON datasets.id = third_party_mappings.dataset_id
-WHERE $1::TEXT = ANY("services")
+SELECT dataproduct_id, dp_name, dp_description, dp_group, dp_created, dp_last_modified, dp_slug, teamkatalogen_url, team_contact, team_id, bq_id, bq_created, bq_last_modified, bq_expires, bq_description, bq_missing_since, pii_tags, bq_project, bq_dataset, bq_table_name, bq_table_type, pseudo_columns, bq_schema, ds_dp_id, ds_id, ds_name, ds_description, ds_created, ds_last_modified, ds_slug, ds_keywords, mapping_services, access_id, access_subject, access_granter, access_expires, access_created, access_revoked, access_request_id, mb_database_id FROM dataproduct_complete_view
+WHERE $1::TEXT = ANY("mapping_services")
 LIMIT $3 OFFSET $2
 `
 
@@ -38,30 +37,56 @@ type GetDatasetsByMappingParams struct {
 	Lim     int32
 }
 
-func (q *Queries) GetDatasetsByMapping(ctx context.Context, arg GetDatasetsByMappingParams) ([]Dataset, error) {
+func (q *Queries) GetDatasetsByMapping(ctx context.Context, arg GetDatasetsByMappingParams) ([]DataproductCompleteView, error) {
 	rows, err := q.db.QueryContext(ctx, getDatasetsByMapping, arg.Service, arg.Offs, arg.Lim)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Dataset{}
+	items := []DataproductCompleteView{}
 	for rows.Next() {
-		var i Dataset
+		var i DataproductCompleteView
 		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Description,
-			&i.Pii,
-			&i.Created,
-			&i.LastModified,
-			&i.Type,
-			&i.TsvDocument,
-			&i.Slug,
-			&i.Repo,
-			pq.Array(&i.Keywords),
 			&i.DataproductID,
-			&i.AnonymisationDescription,
-			&i.TargetUser,
+			&i.DpName,
+			&i.DpDescription,
+			&i.DpGroup,
+			&i.DpCreated,
+			&i.DpLastModified,
+			&i.DpSlug,
+			&i.TeamkatalogenUrl,
+			&i.TeamContact,
+			&i.TeamID,
+			&i.BqID,
+			&i.BqCreated,
+			&i.BqLastModified,
+			&i.BqExpires,
+			&i.BqDescription,
+			&i.BqMissingSince,
+			&i.PiiTags,
+			&i.BqProject,
+			&i.BqDataset,
+			&i.BqTableName,
+			&i.BqTableType,
+			pq.Array(&i.PseudoColumns),
+			&i.BqSchema,
+			&i.DsDpID,
+			&i.DsID,
+			&i.DsName,
+			&i.DsDescription,
+			&i.DsCreated,
+			&i.DsLastModified,
+			&i.DsSlug,
+			pq.Array(&i.DsKeywords),
+			pq.Array(&i.MappingServices),
+			&i.AccessID,
+			&i.AccessSubject,
+			&i.AccessGranter,
+			&i.AccessExpires,
+			&i.AccessCreated,
+			&i.AccessRevoked,
+			&i.AccessRequestID,
+			&i.MbDatabaseID,
 		); err != nil {
 			return nil, err
 		}

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -16,26 +17,19 @@ import (
 )
 
 func (r *Repo) GetDataset(ctx context.Context, id uuid.UUID) (*models.Dataset, error) {
-	res, err := r.querier.GetDataset(ctx, id)
+	res, err := r.querier.GetDataset(ctx, uuid.NullUUID{UUID: id, Valid: true})
 	if err != nil {
 		return nil, fmt.Errorf("getting dataset from database: %w", err)
 	}
 
-	return datasetFromSQL(res), nil
-}
-
-func (r *Repo) GetDatasetsInDataproduct(ctx context.Context, id uuid.UUID) ([]*models.Dataset, error) {
-	datasetsSQL, err := r.querier.GetDatasetsInDataproduct(ctx, id)
+	datasets, err := datasetsFromSQL(res)
 	if err != nil {
 		return nil, err
 	}
-
-	var datasetsGraph []*models.Dataset
-	for _, ds := range datasetsSQL {
-		datasetsGraph = append(datasetsGraph, datasetFromSQL(ds))
+	if len(datasets) == 0 {
+		return nil, fmt.Errorf("GetDataset: no dataset found")
 	}
-
-	return datasetsGraph, nil
+	return datasets[0], nil
 }
 
 func (r *Repo) CreateDataset(ctx context.Context, ds models.NewDataset, referenceDatasource *models.NewBigQuery, user *auth.User) (*models.Dataset, error) {
@@ -151,7 +145,7 @@ func (r *Repo) CreateDataset(ctx context.Context, ds models.NewDataset, referenc
 		return nil, err
 	}
 
-	ret := datasetFromSQL(created)
+	ret := minimalDatasetFromSQL(created)
 	return ret, nil
 }
 
@@ -236,7 +230,7 @@ func (r *Repo) UpdateDataset(ctx context.Context, id uuid.UUID, new models.Updat
 		return nil, err
 	}
 
-	return datasetFromSQL(res), nil
+	return minimalDatasetFromSQL(res), nil
 }
 
 func (r *Repo) GetBigqueryDatasource(ctx context.Context, datasetID uuid.UUID, isReference bool) (models.BigQuery, error) {
@@ -335,48 +329,21 @@ func (r *Repo) GetDatasetPiiTags(ctx context.Context, id uuid.UUID) (map[string]
 	return piiTags, nil
 }
 
-func (r *Repo) GetDatasetsByMetabase(ctx context.Context, limit, offset int) ([]*models.Dataset, error) {
-	dss := []*models.Dataset{}
-
-	res, err := r.querier.DatasetsByMetabase(ctx, gensql.DatasetsByMetabaseParams{
-		Lim:  int32(limit),
-		Offs: int32(offset),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("getting dataproducts by metabase from database: %w", err)
-	}
-
-	for _, entry := range res {
-		dss = append(dss, datasetFromSQL(entry))
-	}
-
-	return dss, nil
-}
-
 func (r *Repo) GetDatasetsByUserAccess(ctx context.Context, user string) ([]*models.Dataset, error) {
 	res, err := r.querier.GetDatasetsByUserAccess(ctx, user)
 	if err != nil {
 		return nil, err
 	}
 
-	dss := []*models.Dataset{}
-	for _, d := range res {
-		dss = append(dss, datasetFromSQL(d))
-	}
-	return dss, nil
+	return datasetsFromSQL(res)
 }
 
 func (r *Repo) GetDatasetsForOwner(ctx context.Context, userGroups []string) ([]*models.Dataset, error) {
-	datasetsSQL, err := r.querier.GetDatasetsForOwner(ctx, userGroups)
+	dprows, err := r.querier.GetDatasetsForOwner(ctx, userGroups)
 	if err != nil {
 		return nil, err
 	}
-
-	dss := []*models.Dataset{}
-	for _, d := range datasetsSQL {
-		dss = append(dss, datasetFromSQL(d))
-	}
-	return dss, nil
+	return datasetsFromSQL(dprows)
 }
 
 func (r *Repo) DeleteDataset(ctx context.Context, id uuid.UUID) error {
@@ -450,7 +417,7 @@ func PseudoDatasetFromSQL(d *gensql.GetAccessiblePseudoDatasetsByUserRow) (*mode
 	}, fmt.Sprintf("%v.%v.%v", d.BqProjectID, d.BqDatasetID, d.BqTableID)
 }
 
-func datasetFromSQL(ds gensql.Dataset) *models.Dataset {
+func minimalDatasetFromSQL(ds gensql.Dataset) *models.Dataset {
 	return &models.Dataset{
 		ID:                       ds.ID,
 		Name:                     ds.Name,
@@ -466,4 +433,130 @@ func datasetFromSQL(ds gensql.Dataset) *models.Dataset {
 		AnonymisationDescription: nullStringToPtr(ds.AnonymisationDescription),
 		TargetUser:               nullStringToPtr(ds.TargetUser),
 	}
+}
+
+func datasetsFromSQL(dsrows []gensql.DataproductCompleteView) ([]*models.Dataset, error) {
+	datasets := []*models.Dataset{}
+
+	for _, dsrow := range dsrows {
+		owner := &models.Owner{
+			Group:            dsrow.DpGroup,
+			TeamkatalogenURL: nullStringToPtr(dsrow.TeamkatalogenUrl),
+			TeamContact:      nullStringToPtr(dsrow.TeamContact),
+			TeamID:           nullStringToPtr(dsrow.TeamID),
+		}
+
+		if !dsrow.DsID.Valid {
+			continue
+		}
+
+		piiTags := "{}"
+		if dsrow.PiiTags.RawMessage != nil {
+			piiTags = string(dsrow.PiiTags.RawMessage)
+		}
+
+		var ds *models.Dataset
+
+		for _, dsIn := range datasets {
+			if dsIn.ID == dsrow.DsID.UUID {
+				ds = dsIn
+				break
+			}
+		}
+		if ds == nil {
+			ds = &models.Dataset{
+				ID:            dsrow.DsID.UUID,
+				Name:          dsrow.DsName.String,
+				Created:       dsrow.DsCreated.Time,
+				LastModified:  dsrow.DsLastModified.Time,
+				Description:   nullStringToPtr(dsrow.DsDescription),
+				Slug:          dsrow.DsSlug.String,
+				Keywords:      dsrow.DsKeywords,
+				DataproductID: dsrow.DataproductID,
+				Owner:         owner,
+				Mappings:      []models.MappingService{},
+				Access:        []*models.Access{},
+				Services:      &models.DatasetServices{},
+			}
+			datasets = append(datasets, ds)
+		}
+
+		if dsrow.BqID != uuid.Nil {
+			var schema []*models.TableColumn
+			if dsrow.BqSchema.Valid {
+				if err := json.Unmarshal(dsrow.BqSchema.RawMessage, &schema); err != nil {
+					return nil, fmt.Errorf("unmarshalling schema: %w", err)
+				}
+			}
+
+			dsrc := models.BigQuery{
+				ID:            dsrow.BqID,
+				DatasetID:     dsrow.DsID.UUID,
+				ProjectID:     dsrow.BqProject,
+				Dataset:       dsrow.BqDataset,
+				Table:         dsrow.BqTableName,
+				TableType:     models.BigQueryType(dsrow.BqTableType),
+				Created:       dsrow.BqCreated,
+				LastModified:  dsrow.BqLastModified,
+				Expires:       nullTimeToPtr(dsrow.BqExpires),
+				Description:   dsrow.BqDescription.String,
+				PiiTags:       &piiTags,
+				MissingSince:  nullTimeToPtr(dsrow.BqMissingSince),
+				PseudoColumns: dsrow.PseudoColumns,
+				Schema:        schema,
+			}
+			ds.Datasource = dsrc
+		}
+
+		if len(dsrow.MappingServices) > 0 {
+			for _, service := range dsrow.MappingServices {
+				exist := false
+				for _, mapping := range ds.Mappings {
+					if mapping.String() == service {
+						exist = true
+						break
+					}
+				}
+				if !exist {
+					ds.Mappings = append(ds.Mappings, models.MappingService(service))
+				}
+			}
+		}
+
+		if dsrow.AccessID.Valid {
+			exist := false
+			for _, dsAccess := range ds.Access {
+				if dsAccess.ID == dsrow.AccessID.UUID {
+					exist = true
+					break
+				}
+			}
+			if !exist {
+				access := &models.Access{
+					ID:              dsrow.AccessID.UUID,
+					Subject:         dsrow.AccessSubject.String,
+					Granter:         dsrow.AccessGranter.String,
+					Expires:         nullTimeToPtr(dsrow.AccessExpires),
+					Created:         dsrow.AccessCreated.Time,
+					Revoked:         nullTimeToPtr(dsrow.AccessRevoked),
+					DatasetID:       dsrow.DsID.UUID,
+					AccessRequestID: nullUUIDToUUIDPtr(dsrow.AccessRequestID),
+				}
+				ds.Access = append(ds.Access, access)
+			}
+		}
+
+		if ds.Services == nil && dsrow.MbDatabaseID.Valid {
+			svc := &models.DatasetServices{}
+			base := "https://metabase.intern.dev.nav.no/browse/%v"
+			if os.Getenv("NAIS_CLUSTER_NAME") == "prod-gcp" {
+				base = "https://metabase.intern.nav.no/browse/%v"
+			}
+			url := fmt.Sprintf(base, dsrow.MbDatabaseID.Int32)
+			svc.Metabase = &url
+			ds.Services = svc
+		}
+	}
+
+	return datasets, nil
 }

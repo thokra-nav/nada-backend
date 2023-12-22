@@ -14,7 +14,6 @@ FROM third_party_mappings
 WHERE "dataset_id" = @dataset_id;
 
 -- name: GetDatasetsByMapping :many
-SELECT datasets.* FROM third_party_mappings
-INNER JOIN datasets ON datasets.id = third_party_mappings.dataset_id
-WHERE @service::TEXT = ANY("services")
+SELECT * FROM dataproduct_complete_view
+WHERE @service::TEXT = ANY("mapping_services")
 LIMIT @lim OFFSET @offs;

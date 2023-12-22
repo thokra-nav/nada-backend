@@ -23,27 +23,13 @@ type Dataproduct @goModel(model: "github.com/navikt/nada-backend/pkg/graph/model
 }
 
 """
-DataproductComplete contains metadata on a datasource.
+DataproductUpdate contains metadata on a datasource.
 """
-type DataproductComplete @goModel(model: "github.com/navikt/nada-backend/pkg/graph/models.DataproductComplete"){
+type DataproductUpdate @goModel(model: "github.com/navikt/nada-backend/pkg/graph/models.DataproductUpdate"){
     "id is the identifier for the dataproduct"
     id: ID!
-    "name of the dataproduct"
-    name: String!
-    "description of the dataproduct"
-    description(raw: Boolean): String! @goField(forceResolver: true)
-    "created is the timestamp for when the dataproduct was created"
-    created: Time!
-    "lastModified is the timestamp for when the dataproduct was last modified"
-    lastModified: Time!
     "slug is the dataproduct slug"
     slug: String!
-    "owner of the dataproduct. Changes to the dataproduct can only be done by a member of the owner."
-    owner: Owner!
-    "keywords is the keyword tags for the datasets in the dataproduct."
-    keywords: [String!]!
-    "datasets is the list of associated datasets."
-    datasets: [DatasetComplete!]!
 }
 
 """
@@ -64,26 +50,6 @@ extend type Query {
         "id of the requested dataproduct."
         id: ID!
     ): Dataproduct!
-
-    """
-    dataproductComplete returns the given dataproduct with complete information.
-    """
-    dataproductComplete(
-        "id of the requested dataproduct."
-        id: ID!
-    ): DataproductComplete!
-
-    """
-    dataproducts returns a list of dataproducts. Pagination done using the arguments.
-    """
-    dataproducts(
-        "limit the number of returned dataproducts."
-        limit: Int
-        "offset the list of returned dataproducts. Used as pagination with PAGE-INDEX * limit."
-        offset: Int
-        "service is the third party service."
-        service: MappingService
-    ): [Dataproduct!]!
 
     """
     groupStats returns statistics for groups that have created dataproducts.
@@ -134,6 +100,7 @@ input UpdateDataproduct @goModel(model: "github.com/navikt/nada-backend/pkg/grap
     teamID: String
 }
 
+
 extend type Mutation {
     """
     createDataproduct creates a new dataproduct
@@ -143,7 +110,7 @@ extend type Mutation {
     createDataproduct(
         "input contains information about the new dataproduct."
         input: NewDataproduct!
-    ): Dataproduct! @authenticated
+    ): DataproductUpdate! @authenticated
 
     """
     updateDataproduct updates an existing dataproduct
@@ -155,7 +122,7 @@ extend type Mutation {
         id: ID!
         "input contains information about the updated dataproduct."
         input: UpdateDataproduct!
-    ): Dataproduct! @authenticated
+    ) : DataproductUpdate! @authenticated
 
 
     """

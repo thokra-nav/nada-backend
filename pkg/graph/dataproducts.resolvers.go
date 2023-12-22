@@ -27,45 +27,8 @@ func (r *dataproductResolver) Description(ctx context.Context, obj *models.Datap
 	return *obj.Description, nil
 }
 
-// Keywords is the resolver for the keywords field.
-func (r *dataproductResolver) Keywords(ctx context.Context, obj *models.Dataproduct) ([]string, error) {
-	datasets, err := r.repo.GetDatasetsInDataproduct(ctx, obj.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	keywords := []string{}
-	for _, ds := range datasets {
-		for _, k := range ds.Keywords {
-			if !contains(keywords, k) {
-				keywords = append(keywords, k)
-			}
-		}
-	}
-
-	return keywords, nil
-}
-
-// Datasets is the resolver for the datasets field.
-func (r *dataproductResolver) Datasets(ctx context.Context, obj *models.Dataproduct) ([]*models.Dataset, error) {
-	return r.repo.GetDatasetsInDataproduct(ctx, obj.ID)
-}
-
-// Description is the resolver for the description field.
-func (r *dataproductCompleteResolver) Description(ctx context.Context, obj *models.DataproductComplete, raw *bool) (string, error) {
-	if obj.Description == nil {
-		return "", nil
-	}
-
-	if raw != nil && *raw {
-		return html.UnescapeString(*obj.Description), nil
-	}
-
-	return *obj.Description, nil
-}
-
 // CreateDataproduct is the resolver for the createDataproduct field.
-func (r *mutationResolver) CreateDataproduct(ctx context.Context, input models.NewDataproduct) (*models.Dataproduct, error) {
+func (r *mutationResolver) CreateDataproduct(ctx context.Context, input models.NewDataproduct) (*models.DataproductUpdate, error) {
 	user := auth.GetUser(ctx)
 	if err := ensureUserInGroup(ctx, input.Group); err != nil {
 		return nil, err
@@ -80,11 +43,14 @@ func (r *mutationResolver) CreateDataproduct(ctx context.Context, input models.N
 		return nil, err
 	}
 
-	return dp, nil
+	return &models.DataproductUpdate{
+		ID:   dp.ID,
+		Slug: dp.Slug,
+	}, nil
 }
 
 // UpdateDataproduct is the resolver for the updateDataproduct field.
-func (r *mutationResolver) UpdateDataproduct(ctx context.Context, id uuid.UUID, input models.UpdateDataproduct) (*models.Dataproduct, error) {
+func (r *mutationResolver) UpdateDataproduct(ctx context.Context, id uuid.UUID, input models.UpdateDataproduct) (*models.DataproductUpdate, error) {
 	dp, err := r.repo.GetDataproduct(ctx, id)
 	if err != nil {
 		return nil, err
@@ -95,7 +61,11 @@ func (r *mutationResolver) UpdateDataproduct(ctx context.Context, id uuid.UUID, 
 	if input.Description != nil && *input.Description != "" {
 		*input.Description = html.EscapeString(*input.Description)
 	}
-	return r.repo.UpdateDataproduct(ctx, id, input)
+	err = r.repo.UpdateDataproduct(ctx, id, input)
+	return &models.DataproductUpdate{
+		ID:   dp.ID,
+		Slug: dp.Slug,
+	}, err
 }
 
 // DeleteDataproduct is the resolver for the deleteDataproduct field.
@@ -116,17 +86,6 @@ func (r *queryResolver) Dataproduct(ctx context.Context, id uuid.UUID) (*models.
 	return r.repo.GetDataproduct(ctx, id)
 }
 
-// DataproductComplete is the resolver for the dataproductComplete field.
-func (r *queryResolver) DataproductComplete(ctx context.Context, id uuid.UUID) (*models.DataproductComplete, error) {
-	return r.repo.GetDataproductComplete(ctx, id)
-}
-
-// Dataproducts is the resolver for the dataproducts field.
-func (r *queryResolver) Dataproducts(ctx context.Context, limit *int, offset *int, service *models.MappingService) ([]*models.Dataproduct, error) {
-	l, o := pagination(limit, offset)
-	return r.repo.GetDataproducts(ctx, l, o)
-}
-
 // GroupStats is the resolver for the groupStats field.
 func (r *queryResolver) GroupStats(ctx context.Context, limit *int, offset *int) ([]*models.GroupStats, error) {
 	l, o := pagination(limit, offset)
@@ -136,10 +95,15 @@ func (r *queryResolver) GroupStats(ctx context.Context, limit *int, offset *int)
 // Dataproduct returns generated.DataproductResolver implementation.
 func (r *Resolver) Dataproduct() generated.DataproductResolver { return &dataproductResolver{r} }
 
-// DataproductComplete returns generated.DataproductCompleteResolver implementation.
-func (r *Resolver) DataproductComplete() generated.DataproductCompleteResolver {
-	return &dataproductCompleteResolver{r}
-}
-
 type dataproductResolver struct{ *Resolver }
-type dataproductCompleteResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *queryResolver) Dataproducts(ctx context.Context, limit *int, offset *int, service *models.MappingService) ([]*models.Dataproduct, error) {
+	l, o := pagination(limit, offset)
+	return r.repo.GetDataproducts(ctx, l, o)
+}

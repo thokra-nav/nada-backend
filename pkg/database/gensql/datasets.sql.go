@@ -175,69 +175,6 @@ func (q *Queries) CreateDataset(ctx context.Context, arg CreateDatasetParams) (D
 	return i, err
 }
 
-const datasetsByMetabase = `-- name: DatasetsByMetabase :many
-SELECT
-  id, name, description, pii, created, last_modified, type, tsv_document, slug, repo, keywords, dataproduct_id, anonymisation_description, target_user
-FROM
-  datasets
-WHERE
-  id IN (
-    SELECT
-      dataset_id
-    FROM
-      metabase_metadata
-    WHERE
-      "deleted_at" IS NULL
-  )
-ORDER BY
-  last_modified DESC
-LIMIT
-  $2 OFFSET $1
-`
-
-type DatasetsByMetabaseParams struct {
-	Offs int32
-	Lim  int32
-}
-
-func (q *Queries) DatasetsByMetabase(ctx context.Context, arg DatasetsByMetabaseParams) ([]Dataset, error) {
-	rows, err := q.db.QueryContext(ctx, datasetsByMetabase, arg.Offs, arg.Lim)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Dataset{}
-	for rows.Next() {
-		var i Dataset
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Description,
-			&i.Pii,
-			&i.Created,
-			&i.LastModified,
-			&i.Type,
-			&i.TsvDocument,
-			&i.Slug,
-			&i.Repo,
-			pq.Array(&i.Keywords),
-			&i.DataproductID,
-			&i.AnonymisationDescription,
-			&i.TargetUser,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const deleteDataset = `-- name: DeleteDataset :exec
 DELETE FROM
   datasets
@@ -433,175 +370,65 @@ func (q *Queries) GetBigqueryDatasources(ctx context.Context) ([]DatasourceBigqu
 	return items, nil
 }
 
-const getDataset = `-- name: GetDataset :one
+const getDataset = `-- name: GetDataset :many
 SELECT
-  id, name, description, pii, created, last_modified, type, tsv_document, slug, repo, keywords, dataproduct_id, anonymisation_description, target_user
+  dataproduct_id, dp_name, dp_description, dp_group, dp_created, dp_last_modified, dp_slug, teamkatalogen_url, team_contact, team_id, bq_id, bq_created, bq_last_modified, bq_expires, bq_description, bq_missing_since, pii_tags, bq_project, bq_dataset, bq_table_name, bq_table_type, pseudo_columns, bq_schema, ds_dp_id, ds_id, ds_name, ds_description, ds_created, ds_last_modified, ds_slug, ds_keywords, mapping_services, access_id, access_subject, access_granter, access_expires, access_created, access_revoked, access_request_id, mb_database_id
 FROM
-  datasets
+  dataproduct_complete_view
 WHERE
-  id = $1
+  ds_id = $1
 `
 
-func (q *Queries) GetDataset(ctx context.Context, id uuid.UUID) (Dataset, error) {
-	row := q.db.QueryRowContext(ctx, getDataset, id)
-	var i Dataset
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Description,
-		&i.Pii,
-		&i.Created,
-		&i.LastModified,
-		&i.Type,
-		&i.TsvDocument,
-		&i.Slug,
-		&i.Repo,
-		pq.Array(&i.Keywords),
-		&i.DataproductID,
-		&i.AnonymisationDescription,
-		&i.TargetUser,
-	)
-	return i, err
-}
-
-const getDatasets = `-- name: GetDatasets :many
-SELECT
-  id, name, description, pii, created, last_modified, type, tsv_document, slug, repo, keywords, dataproduct_id, anonymisation_description, target_user
-FROM
-  datasets
-ORDER BY
-  last_modified DESC
-LIMIT
-  $2 OFFSET $1
-`
-
-type GetDatasetsParams struct {
-	Offset int32
-	Limit  int32
-}
-
-func (q *Queries) GetDatasets(ctx context.Context, arg GetDatasetsParams) ([]Dataset, error) {
-	rows, err := q.db.QueryContext(ctx, getDatasets, arg.Offset, arg.Limit)
+func (q *Queries) GetDataset(ctx context.Context, id uuid.NullUUID) ([]DataproductCompleteView, error) {
+	rows, err := q.db.QueryContext(ctx, getDataset, id)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Dataset{}
+	items := []DataproductCompleteView{}
 	for rows.Next() {
-		var i Dataset
+		var i DataproductCompleteView
 		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Description,
-			&i.Pii,
-			&i.Created,
-			&i.LastModified,
-			&i.Type,
-			&i.TsvDocument,
-			&i.Slug,
-			&i.Repo,
-			pq.Array(&i.Keywords),
 			&i.DataproductID,
-			&i.AnonymisationDescription,
-			&i.TargetUser,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getDatasetsByGroups = `-- name: GetDatasetsByGroups :many
-SELECT
-  id, name, description, pii, created, last_modified, type, tsv_document, slug, repo, keywords, dataproduct_id, anonymisation_description, target_user
-FROM
-  datasets
-WHERE
-  "group" = ANY ($1 :: text [])
-ORDER BY
-  last_modified DESC
-`
-
-func (q *Queries) GetDatasetsByGroups(ctx context.Context, groups []string) ([]Dataset, error) {
-	rows, err := q.db.QueryContext(ctx, getDatasetsByGroups, pq.Array(groups))
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Dataset{}
-	for rows.Next() {
-		var i Dataset
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Description,
-			&i.Pii,
-			&i.Created,
-			&i.LastModified,
-			&i.Type,
-			&i.TsvDocument,
-			&i.Slug,
-			&i.Repo,
-			pq.Array(&i.Keywords),
-			&i.DataproductID,
-			&i.AnonymisationDescription,
-			&i.TargetUser,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getDatasetsByIDs = `-- name: GetDatasetsByIDs :many
-SELECT
-  id, name, description, pii, created, last_modified, type, tsv_document, slug, repo, keywords, dataproduct_id, anonymisation_description, target_user
-FROM
-  datasets
-WHERE
-  id = ANY ($1 :: uuid [])
-ORDER BY
-  last_modified DESC
-`
-
-func (q *Queries) GetDatasetsByIDs(ctx context.Context, ids []uuid.UUID) ([]Dataset, error) {
-	rows, err := q.db.QueryContext(ctx, getDatasetsByIDs, pq.Array(ids))
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Dataset{}
-	for rows.Next() {
-		var i Dataset
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Description,
-			&i.Pii,
-			&i.Created,
-			&i.LastModified,
-			&i.Type,
-			&i.TsvDocument,
-			&i.Slug,
-			&i.Repo,
-			pq.Array(&i.Keywords),
-			&i.DataproductID,
-			&i.AnonymisationDescription,
-			&i.TargetUser,
+			&i.DpName,
+			&i.DpDescription,
+			&i.DpGroup,
+			&i.DpCreated,
+			&i.DpLastModified,
+			&i.DpSlug,
+			&i.TeamkatalogenUrl,
+			&i.TeamContact,
+			&i.TeamID,
+			&i.BqID,
+			&i.BqCreated,
+			&i.BqLastModified,
+			&i.BqExpires,
+			&i.BqDescription,
+			&i.BqMissingSince,
+			&i.PiiTags,
+			&i.BqProject,
+			&i.BqDataset,
+			&i.BqTableName,
+			&i.BqTableType,
+			pq.Array(&i.PseudoColumns),
+			&i.BqSchema,
+			&i.DsDpID,
+			&i.DsID,
+			&i.DsName,
+			&i.DsDescription,
+			&i.DsCreated,
+			&i.DsLastModified,
+			&i.DsSlug,
+			pq.Array(&i.DsKeywords),
+			pq.Array(&i.MappingServices),
+			&i.AccessID,
+			&i.AccessSubject,
+			&i.AccessGranter,
+			&i.AccessExpires,
+			&i.AccessCreated,
+			&i.AccessRevoked,
+			&i.AccessRequestID,
+			&i.MbDatabaseID,
 		); err != nil {
 			return nil, err
 		}
@@ -618,11 +445,11 @@ func (q *Queries) GetDatasetsByIDs(ctx context.Context, ids []uuid.UUID) ([]Data
 
 const getDatasetsByUserAccess = `-- name: GetDatasetsByUserAccess :many
 SELECT
-  id, name, description, pii, created, last_modified, type, tsv_document, slug, repo, keywords, dataproduct_id, anonymisation_description, target_user
+  dataproduct_id, dp_name, dp_description, dp_group, dp_created, dp_last_modified, dp_slug, teamkatalogen_url, team_contact, team_id, bq_id, bq_created, bq_last_modified, bq_expires, bq_description, bq_missing_since, pii_tags, bq_project, bq_dataset, bq_table_name, bq_table_type, pseudo_columns, bq_schema, ds_dp_id, ds_id, ds_name, ds_description, ds_created, ds_last_modified, ds_slug, ds_keywords, mapping_services, access_id, access_subject, access_granter, access_expires, access_created, access_revoked, access_request_id, mb_database_id
 FROM
-  datasets
+  dataproduct_complete_view
 WHERE
-  id = ANY (
+  ds_id = ANY (
     SELECT
       dataset_id
     FROM
@@ -636,33 +463,59 @@ WHERE
       )
   )
 ORDER BY
-  last_modified DESC
+  ds_last_modified DESC
 `
 
-func (q *Queries) GetDatasetsByUserAccess(ctx context.Context, id string) ([]Dataset, error) {
+func (q *Queries) GetDatasetsByUserAccess(ctx context.Context, id string) ([]DataproductCompleteView, error) {
 	rows, err := q.db.QueryContext(ctx, getDatasetsByUserAccess, id)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Dataset{}
+	items := []DataproductCompleteView{}
 	for rows.Next() {
-		var i Dataset
+		var i DataproductCompleteView
 		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Description,
-			&i.Pii,
-			&i.Created,
-			&i.LastModified,
-			&i.Type,
-			&i.TsvDocument,
-			&i.Slug,
-			&i.Repo,
-			pq.Array(&i.Keywords),
 			&i.DataproductID,
-			&i.AnonymisationDescription,
-			&i.TargetUser,
+			&i.DpName,
+			&i.DpDescription,
+			&i.DpGroup,
+			&i.DpCreated,
+			&i.DpLastModified,
+			&i.DpSlug,
+			&i.TeamkatalogenUrl,
+			&i.TeamContact,
+			&i.TeamID,
+			&i.BqID,
+			&i.BqCreated,
+			&i.BqLastModified,
+			&i.BqExpires,
+			&i.BqDescription,
+			&i.BqMissingSince,
+			&i.PiiTags,
+			&i.BqProject,
+			&i.BqDataset,
+			&i.BqTableName,
+			&i.BqTableType,
+			pq.Array(&i.PseudoColumns),
+			&i.BqSchema,
+			&i.DsDpID,
+			&i.DsID,
+			&i.DsName,
+			&i.DsDescription,
+			&i.DsCreated,
+			&i.DsLastModified,
+			&i.DsSlug,
+			pq.Array(&i.DsKeywords),
+			pq.Array(&i.MappingServices),
+			&i.AccessID,
+			&i.AccessSubject,
+			&i.AccessGranter,
+			&i.AccessExpires,
+			&i.AccessCreated,
+			&i.AccessRevoked,
+			&i.AccessRequestID,
+			&i.MbDatabaseID,
 		); err != nil {
 			return nil, err
 		}
@@ -679,9 +532,9 @@ func (q *Queries) GetDatasetsByUserAccess(ctx context.Context, id string) ([]Dat
 
 const getDatasetsForOwner = `-- name: GetDatasetsForOwner :many
 SELECT
-  ds.id, ds.name, ds.description, ds.pii, ds.created, ds.last_modified, ds.type, ds.tsv_document, ds.slug, ds.repo, ds.keywords, ds.dataproduct_id, ds.anonymisation_description, ds.target_user
+  dataproduct_id, dp_name, dp_description, dp_group, dp_created, dp_last_modified, dp_slug, teamkatalogen_url, team_contact, team_id, bq_id, bq_created, bq_last_modified, bq_expires, bq_description, bq_missing_since, pii_tags, bq_project, bq_dataset, bq_table_name, bq_table_type, pseudo_columns, bq_schema, ds_dp_id, ds_id, ds_name, ds_description, ds_created, ds_last_modified, ds_slug, ds_keywords, mapping_services, access_id, access_subject, access_granter, access_expires, access_created, access_revoked, access_request_id, mb_database_id
 FROM
-  datasets ds
+  dataproduct_complete_view
 WHERE
   dataproduct_id IN (
     SELECT
@@ -693,77 +546,56 @@ WHERE
   )
 `
 
-func (q *Queries) GetDatasetsForOwner(ctx context.Context, groups []string) ([]Dataset, error) {
+func (q *Queries) GetDatasetsForOwner(ctx context.Context, groups []string) ([]DataproductCompleteView, error) {
 	rows, err := q.db.QueryContext(ctx, getDatasetsForOwner, pq.Array(groups))
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Dataset{}
+	items := []DataproductCompleteView{}
 	for rows.Next() {
-		var i Dataset
+		var i DataproductCompleteView
 		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Description,
-			&i.Pii,
-			&i.Created,
-			&i.LastModified,
-			&i.Type,
-			&i.TsvDocument,
-			&i.Slug,
-			&i.Repo,
-			pq.Array(&i.Keywords),
 			&i.DataproductID,
-			&i.AnonymisationDescription,
-			&i.TargetUser,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getDatasetsInDataproduct = `-- name: GetDatasetsInDataproduct :many
-SELECT
-  id, name, description, pii, created, last_modified, type, tsv_document, slug, repo, keywords, dataproduct_id, anonymisation_description, target_user
-FROM
-  datasets
-WHERE
-  dataproduct_id = $1
-`
-
-func (q *Queries) GetDatasetsInDataproduct(ctx context.Context, dataproductID uuid.UUID) ([]Dataset, error) {
-	rows, err := q.db.QueryContext(ctx, getDatasetsInDataproduct, dataproductID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Dataset{}
-	for rows.Next() {
-		var i Dataset
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Description,
-			&i.Pii,
-			&i.Created,
-			&i.LastModified,
-			&i.Type,
-			&i.TsvDocument,
-			&i.Slug,
-			&i.Repo,
-			pq.Array(&i.Keywords),
-			&i.DataproductID,
-			&i.AnonymisationDescription,
-			&i.TargetUser,
+			&i.DpName,
+			&i.DpDescription,
+			&i.DpGroup,
+			&i.DpCreated,
+			&i.DpLastModified,
+			&i.DpSlug,
+			&i.TeamkatalogenUrl,
+			&i.TeamContact,
+			&i.TeamID,
+			&i.BqID,
+			&i.BqCreated,
+			&i.BqLastModified,
+			&i.BqExpires,
+			&i.BqDescription,
+			&i.BqMissingSince,
+			&i.PiiTags,
+			&i.BqProject,
+			&i.BqDataset,
+			&i.BqTableName,
+			&i.BqTableType,
+			pq.Array(&i.PseudoColumns),
+			&i.BqSchema,
+			&i.DsDpID,
+			&i.DsID,
+			&i.DsName,
+			&i.DsDescription,
+			&i.DsCreated,
+			&i.DsLastModified,
+			&i.DsSlug,
+			pq.Array(&i.DsKeywords),
+			pq.Array(&i.MappingServices),
+			&i.AccessID,
+			&i.AccessSubject,
+			&i.AccessGranter,
+			&i.AccessExpires,
+			&i.AccessCreated,
+			&i.AccessRevoked,
+			&i.AccessRequestID,
+			&i.MbDatabaseID,
 		); err != nil {
 			return nil, err
 		}

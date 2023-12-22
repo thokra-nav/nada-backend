@@ -40,46 +40,6 @@ type Dataset @goModel(model: "github.com/navikt/nada-backend/pkg/graph/models.Da
     targetUser: String
 }
 
-"""
-DatasetComplete contains metadata on a dataset.
-"""
-type DatasetComplete @goModel(model: "github.com/navikt/nada-backend/pkg/graph/models.DatasetComplete"){
-    "id is the identifier for the dataset"
-    id: ID!
-    "dataproductID is the id of the dataproduct containing the dataset"
-    dataproductID: ID!
-    "name of the dataset"
-    name: String!
-    "description of the dataset"
-    description(raw: Boolean): String! @goField(forceResolver: true)
-    "created is the timestamp for when the dataset was created"
-    created: Time!
-    "lastModified is the timestamp for when the dataset was last modified"
-    lastModified: Time!
-    "repo is the url of the repository containing the code to create the dataset"
-    repo: String
-    "pii indicates whether it is personal identifiable information in the dataset"
-    pii: PiiLevel!
-    "keywords for the dataset used as tags."
-    keywords: [String!]!
-    "owner is the owner of the dataproduct containing this dataset"
-    owner: Owner!
-    "slug is the dataset slug"
-    slug: String!
-    "datasource contains metadata on the datasource"
-    datasource: Datasource!
-    "access contains list of users, groups and service accounts which have access to the dataset"
-    access: [Access!]!
-    "services contains links to this dataset in other services"
-    services: DatasetServices!
-    "mappings services a dataset is exposed to"
-    mappings: [MappingService!]!
-    "anonymisation_description explains how the dataset was anonymised, should be null if `pii` isn't anonymised"
-    anonymisation_description: String
-    "targetUser is the type of user that the dataset is meant to be used by"
-    targetUser: String
-}
-
 type DatasetServices @goModel(model: "github.com/navikt/nada-backend/pkg/graph/models.DatasetServices") {
     "URL to the dataset in metabase"
     metabase: String
@@ -134,39 +94,6 @@ type BigQuery @goModel(model: "github.com/navikt/nada-backend/pkg/graph/models.B
 }
 
 """
-BigQueryComplete contains metadata on a BigQuery table.
-"""
-type BigQueryComplete @goModel(model: "github.com/navikt/nada-backend/pkg/graph/models.BigQueryComplete") {
-    "id is the identifier for the datasource"
-    id: ID!
-    "projectID is the GCP project ID that contains the BigQuery table"
-    projectID: String!
-    "dataset is the dataset that contains the BigQuery table"
-    dataset: String!
-    "table name for BigQuery table"
-    table: String!
-    "schema for the BigQuery table"
-    schema: [TableColumn!]!
-    "lastModified is the time when the table was last modified"
-    lastModified: Time!
-    "created is when the table was created"
-    created: Time!
-    "expires, if set, is when the table expires"
-    expires: Time
-    "tableType is what type the table is"
-    tableType: BigQueryType!
-    "description is the description of the BigQuery table"
-    description: String!
-    "piiTags is json string from the pii tags map"
-    piiTags: String
-    "missingSince, if set, is the time when the table got deleted from BigQuery"
-    missingSince: Time
-    "pseudoColumns, if set, the columns are pseudonymised"
-    pseudoColumns: [String!]
-
-}
-
-"""
 PseudoDataset contains information about a pseudo dataset
 """
 type PseudoDataset @goModel(model: "github.com/navikt/nada-backend/pkg/graph/models.PseudoDataset") {
@@ -181,7 +108,7 @@ type PseudoDataset @goModel(model: "github.com/navikt/nada-backend/pkg/graph/mod
 """
 Datasource defines types that can be returned as a dataset datasource.
 """
-union Datasource @goModel(model: "github.com/navikt/nada-backend/pkg/graph/models.Datasource") = BigQuery | BigQueryComplete
+union Datasource @goModel(model: "github.com/navikt/nada-backend/pkg/graph/models.Datasource") = BigQuery
 
 extend type Query {
     """
@@ -199,13 +126,6 @@ extend type Query {
         "datasetID of the requested dataset."
         datasetID: ID!
     ): [AccessRequest!]! @authenticated
-
-    """
-    """
-    datasetsInDataproduct(
-        "dataproductID is the id of the dataproduct."
-        dataproductID: ID!
-    ): [Dataset!]!
 
     """
     accessiblePseudoDatasets returns the pseudo datasets the user has access to.

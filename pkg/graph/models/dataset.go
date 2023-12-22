@@ -19,8 +19,13 @@ type Dataset struct {
 	Pii                      PiiLevel  `json:"pii"`
 	Keywords                 []string  `json:"keywords"`
 	Type                     gensql.DatasourceType
-	AnonymisationDescription *string `json:"anonymisationDescription"`
-	TargetUser               *string `json:"targetUser"`
+	AnonymisationDescription *string          `json:"anonymisationDescription"`
+	TargetUser               *string          `json:"targetUser"`
+	Mappings                 []MappingService `json:"mappings"`
+	Access                   []*Access        `json:"access"`
+	Owner                    *Owner           `json:"owner"`
+	Services                 *DatasetServices `json:"datasetServices"`
+	Datasource               Datasource       `json:"datasource"`
 }
 
 func (Dataset) IsSearchResult() {}
@@ -32,17 +37,18 @@ type Datasource interface {
 type BigQuery struct {
 	ID            uuid.UUID
 	DatasetID     uuid.UUID
-	ProjectID     string       `json:"projectID"`
-	Dataset       string       `json:"dataset"`
-	Table         string       `json:"table"`
-	TableType     BigQueryType `json:"tableType"`
-	LastModified  time.Time    `json:"lastModified"`
-	Created       time.Time    `json:"created"`
-	Expires       *time.Time   `json:"expired"`
-	Description   string       `json:"description"`
-	PiiTags       *string      `json:"piiTags"`
-	MissingSince  *time.Time   `json:"missingSince"`
-	PseudoColumns []string     `json:"pseudoColumns"`
+	ProjectID     string         `json:"projectID"`
+	Dataset       string         `json:"dataset"`
+	Table         string         `json:"table"`
+	TableType     BigQueryType   `json:"tableType"`
+	LastModified  time.Time      `json:"lastModified"`
+	Created       time.Time      `json:"created"`
+	Expires       *time.Time     `json:"expired"`
+	Description   string         `json:"description"`
+	PiiTags       *string        `json:"piiTags"`
+	MissingSince  *time.Time     `json:"missingSince"`
+	PseudoColumns []string       `json:"pseudoColumns"`
+	Schema        []*TableColumn `json:"schema"`
 }
 
 func (BigQuery) IsDatasource() {}
