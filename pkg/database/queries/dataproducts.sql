@@ -24,7 +24,7 @@ ORDER BY dp_last_modified DESC;
 -- name: GetDataproductsByGroups :many
 SELECT *
 FROM dataproduct_complete_view
-WHERE "group" = ANY (@groups::text[])
+WHERE "dp_group" = ANY (@groups::text[])
 ORDER BY dp_last_modified DESC;
 
 -- name: GetDataproductsByProductArea :many

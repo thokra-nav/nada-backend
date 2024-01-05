@@ -217,16 +217,16 @@ type DataproductCompleteView struct {
 	TeamContact      sql.NullString
 	TeamID           sql.NullString
 	BqID             uuid.UUID
-	BqCreated        time.Time
-	BqLastModified   time.Time
+	BqCreated        sql.NullTime
+	BqLastModified   sql.NullTime
 	BqExpires        sql.NullTime
 	BqDescription    sql.NullString
 	BqMissingSince   sql.NullTime
 	PiiTags          pqtype.NullRawMessage
-	BqProject        string
-	BqDataset        string
-	BqTableName      string
-	BqTableType      string
+	BqProject        sql.NullString
+	BqDataset        sql.NullString
+	BqTableName      sql.NullString
+	BqTableType      sql.NullString
 	PseudoColumns    []string
 	BqSchema         pqtype.NullRawMessage
 	DsDpID           uuid.NullUUID

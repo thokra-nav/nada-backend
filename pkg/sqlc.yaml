@@ -9,3 +9,16 @@ packages:
     emit_empty_slices: true
     # Might want this for v1.11
     # emit_result_struct_pointers: true
+overrides:
+  - column: "dataproduct_complete_view.bq_created"
+    go_type: "database/sql.NullTime"
+  - column: "dataproduct_complete_view.bq_last_modified"
+    go_type: "database/sql.NullTime"
+  - column: "dataproduct_complete_view.bq_project"
+    go_type: "database/sql.NullString"
+  - column: "dataproduct_complete_view.bq_dataset"
+    go_type: "database/sql.NullString"
+  - column: "dataproduct_complete_view.bq_table_name"
+    go_type: "database/sql.NullString"
+  - column: "dataproduct_complete_view.bq_table_type"
+    go_type: "database/sql.NullString"

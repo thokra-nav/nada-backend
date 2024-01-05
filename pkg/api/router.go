@@ -81,7 +81,7 @@ func New(
 	router.Use(corsMW)
 	router.Route("/api", func(r chi.Router) {
 		r.Handle("/", playground.Handler("GraphQL playground", "/api/query"))
-		r.Handle("/query", logMW((gqlServer)))
+		r.Handle("/query", logMW(authMW(gqlServer)))
 		r.HandleFunc("/login", httpAPI.Login)
 		r.HandleFunc("/oauth2/callback", httpAPI.Callback)
 		r.HandleFunc("/logout", httpAPI.Logout)
